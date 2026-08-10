@@ -227,7 +227,33 @@ abertura.
 
 ---
 
-## 8. Comandos
+## 8. Identidade visual
+
+O sistema usa a paleta oficial do Grupo TEA. As cores estão declaradas em um único lugar,
+[`src/app/globals.css`](src/app/globals.css), e todo o resto se serve delas.
+
+| Cor | Hex | Onde aparece |
+|---|---|---|
+| Azul | `#26a3d0` | Vínculo PJ, status "Aberto", indicador "Na fila" |
+| Turquesa | `#09a497` | Cor de ação (botões e links), vínculo CLT, status "Resolvido" |
+| Âmbar | `#f9a50f` | Vínculo Estágio, status "Em andamento", notas internas |
+| Laranja | `#ec562a` | Status "Aguardando colaborador", prioridade Alta, avisos |
+| Vinho | `#901845` | Prioridade Urgente |
+
+Cada cor tem tons pastéis (`50`, `100`, `200`) para fundos e tons escuros (`600`, `700`,
+`800`) para texto e botões. Os pares usados foram conferidos para ter contraste mínimo de
+4.5:1 — é o que garante leitura para quem enxerga pouco ou está no celular sob sol.
+Se for criar telas novas, mantenha a dupla "fundo pastel + texto escuro da mesma cor".
+
+**Logo.** O arquivo [`public/logo-grupo-tea.svg`](public/logo-grupo-tea.svg) é uma versão
+vetorial feita com as cores da paleta, usada na página inicial e no login.
+
+Para usar o arquivo oficial, coloque a arte em `public/logo-grupo-tea.png` (fundo
+transparente, altura de pelo menos 400 px) e faça o deploy. O sistema detecta o arquivo
+sozinho e passa a usá-lo — não é preciso mexer em código. O símbolo do cabeçalho é
+desenhado direto em SVG (`src/components/Logo.tsx`), por isso fica nítido em qualquer tela.
+
+## 9. Comandos
 
 ```bash
 npm run dev        # desenvolvimento

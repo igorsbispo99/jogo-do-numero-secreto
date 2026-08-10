@@ -1,11 +1,19 @@
+/* Cada status usa uma cor da paleta do Grupo TEA, em versão pastel no fundo
+   e escura no texto, para leitura confortável. */
 export const STATUS = {
-  aberto: { titulo: "Aberto", cor: "bg-sky-100 text-sky-800 ring-sky-600/20" },
-  em_andamento: { titulo: "Em andamento", cor: "bg-amber-100 text-amber-900 ring-amber-600/20" },
+  aberto: { titulo: "Aberto", cor: "bg-tea-azul-100 text-tea-azul-800 ring-tea-azul-500/25" },
+  em_andamento: {
+    titulo: "Em andamento",
+    cor: "bg-tea-ambar-100 text-tea-ambar-800 ring-tea-ambar-500/30",
+  },
   aguardando_colaborador: {
     titulo: "Aguardando colaborador",
-    cor: "bg-purple-100 text-purple-800 ring-purple-600/20",
+    cor: "bg-tea-laranja-100 text-tea-laranja-800 ring-tea-laranja-500/25",
   },
-  resolvido: { titulo: "Resolvido", cor: "bg-emerald-100 text-emerald-800 ring-emerald-600/20" },
+  resolvido: {
+    titulo: "Resolvido",
+    cor: "bg-tea-turquesa-100 text-tea-turquesa-800 ring-tea-turquesa-500/25",
+  },
   cancelado: { titulo: "Cancelado", cor: "bg-slate-200 text-slate-700 ring-slate-500/20" },
 } as const;
 
@@ -16,8 +24,14 @@ export const STATUS_ABERTOS: Status[] = ["aberto", "em_andamento", "aguardando_c
 export const PRIORIDADES = {
   baixa: { titulo: "Baixa", cor: "bg-slate-100 text-slate-700 ring-slate-500/20" },
   normal: { titulo: "Normal", cor: "bg-slate-100 text-slate-700 ring-slate-500/20" },
-  alta: { titulo: "Alta", cor: "bg-orange-100 text-orange-800 ring-orange-600/20" },
-  urgente: { titulo: "Urgente", cor: "bg-red-100 text-red-800 ring-red-600/20" },
+  alta: {
+    titulo: "Alta",
+    cor: "bg-tea-laranja-100 text-tea-laranja-800 ring-tea-laranja-500/30",
+  },
+  urgente: {
+    titulo: "Urgente",
+    cor: "bg-tea-vinho-100 text-tea-vinho-800 ring-tea-vinho-500/30",
+  },
 } as const;
 
 export type Prioridade = keyof typeof PRIORIDADES;

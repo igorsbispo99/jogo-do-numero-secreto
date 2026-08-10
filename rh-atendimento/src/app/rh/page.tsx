@@ -78,10 +78,30 @@ export default async function PainelRh({
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Indicador titulo="Na fila" valor={indicadores.abertos} destaque />
-          <Indicador titulo="Em andamento" valor={indicadores.emAndamento} />
-          <Indicador titulo="Aguardando colaborador" valor={indicadores.aguardando} />
-          <Indicador titulo="Meus chamados" valor={indicadores.meus} />
+          <Indicador
+            titulo="Na fila"
+            valor={indicadores.abertos}
+            barra="bg-tea-azul-500"
+            texto="text-tea-azul-700"
+          />
+          <Indicador
+            titulo="Em andamento"
+            valor={indicadores.emAndamento}
+            barra="bg-tea-ambar-500"
+            texto="text-tea-ambar-700"
+          />
+          <Indicador
+            titulo="Aguardando colaborador"
+            valor={indicadores.aguardando}
+            barra="bg-tea-laranja-500"
+            texto="text-tea-laranja-700"
+          />
+          <Indicador
+            titulo="Meus chamados"
+            valor={indicadores.meus}
+            barra="bg-tea-turquesa-500"
+            texto="text-tea-turquesa-700"
+          />
         </div>
 
         <form className="cartao mt-6 flex flex-wrap items-end gap-3 p-4" method="get">
@@ -213,7 +233,7 @@ export default async function PainelRh({
                     href={`/rh?${params.toString()}`}
                     className={`rounded-lg px-3 py-1.5 font-semibold ${
                       n === pagina
-                        ? "bg-marca-700 text-white"
+                        ? "bg-tea-turquesa-700 text-white"
                         : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
                     }`}
                   >
@@ -250,18 +270,21 @@ async function carregarIndicadores(agenteId: string) {
 function Indicador({
   titulo,
   valor,
-  destaque = false,
+  barra,
+  texto,
 }: {
   titulo: string;
   valor: number;
-  destaque?: boolean;
+  barra: string;
+  texto: string;
 }) {
   return (
-    <div className={`cartao p-4 ${destaque ? "ring-1 ring-marca-200" : ""}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{titulo}</p>
-      <p className={`mt-1 text-2xl font-bold ${destaque ? "text-marca-700" : "text-slate-900"}`}>
-        {valor}
-      </p>
+    <div className="cartao overflow-hidden">
+      <div className={`h-1.5 w-full ${barra}`} aria-hidden />
+      <div className="p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{titulo}</p>
+        <p className={`mt-1 text-2xl font-bold ${texto}`}>{valor}</p>
+      </div>
     </div>
   );
 }

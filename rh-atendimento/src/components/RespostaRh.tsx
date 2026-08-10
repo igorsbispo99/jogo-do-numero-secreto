@@ -20,7 +20,7 @@ export function RespostaRh({ chamadoId }: { chamadoId: string }) {
     <form
       ref={formRef}
       action={acao}
-      className={`cartao p-5 ${interna ? "bg-amber-50 ring-1 ring-amber-200" : ""}`}
+      className={`cartao p-5 ${interna ? "bg-tea-ambar-50 ring-1 ring-tea-ambar-200" : ""}`}
     >
       <input type="hidden" name="chamadoId" value={chamadoId} />
 
@@ -87,7 +87,7 @@ export function RespostaRh({ chamadoId }: { chamadoId: string }) {
         </p>
       )}
       {estado.estado === "ok" && estado.mensagem && (
-        <p className="mt-3 text-sm font-medium text-emerald-700">{estado.mensagem}</p>
+        <p className="mt-3 text-sm font-medium text-tea-turquesa-700">{estado.mensagem}</p>
       )}
     </form>
   );

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 172" width="100" height="172" role="img" aria-label="Grupo TEA — Conectar, Acolher, Desenvolver">
+  <title>Grupo TEA</title>
+
+  <!-- Símbolo: cinco pessoas em círculo, nas cores da marca -->
+  <path d="M 34.49 22.01 A 32 32 0 0 1 65.51 22.01" stroke="#26a3d0" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <path d="M 71.82 26.60 A 32 32 0 0 1 81.41 56.11" stroke="#09a497" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <path d="M 79.00 63.52 A 32 32 0 0 1 53.90 81.76" stroke="#f9a50f" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <path d="M 46.10 81.76 A 32 32 0 0 1 21.00 63.52" stroke="#901845" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <path d="M 18.59 56.11 A 32 32 0 0 1 28.18 26.60" stroke="#ec562a" stroke-width="11" stroke-linecap="round" fill="none"/>
+  <circle cx="36.48" cy="21.00" r="7.5" fill="#26a3d0" stroke="#ffffff" stroke-width="2.6"/>
+  <circle cx="73.40" cy="28.18" r="7.5" fill="#09a497" stroke="#ffffff" stroke-width="2.6"/>
+  <circle cx="77.99" cy="65.51" r="7.5" fill="#f9a50f" stroke="#ffffff" stroke-width="2.6"/>
+  <circle cx="43.89" cy="81.41" r="7.5" fill="#901845" stroke="#ffffff" stroke-width="2.6"/>
+  <circle cx="18.24" cy="53.90" r="7.5" fill="#ec562a" stroke="#ffffff" stroke-width="2.6"/>
+
+  <!-- Assinatura -->
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="50" y="120" font-size="17" font-weight="700" letter-spacing="3" fill="#16357d"
+      textLength="76" lengthAdjust="spacingAndGlyphs">GRUPO</text>
+    <text x="50" y="145" font-size="26" font-weight="800"
+      textLength="60" lengthAdjust="spacingAndGlyphs">
+      <tspan fill="#16357d">TE</tspan><tspan fill="#09a497">A</tspan>
+    </text>
+    <text x="50" y="166" font-size="4.6" font-weight="600" fill="#16357d"
+      textLength="86" lengthAdjust="spacingAndGlyphs">CONECTAR • ACOLHER • DESENVOLVER</text>
+  </g>
+
+  <!-- Divisória de pontos, como na marca -->
+  <g>
+    <rect x="9" y="154.3" width="20" height="1.4" rx="0.7" fill="#16357d"/>
+    <circle cx="35" cy="155" r="1.7" fill="#26a3d0"/>
+    <circle cx="42.5" cy="155" r="1.7" fill="#09a497"/>
+    <circle cx="50" cy="155" r="1.7" fill="#901845"/>
+    <circle cx="57.5" cy="155" r="1.7" fill="#ec562a"/>
+    <circle cx="65" cy="155" r="1.7" fill="#f9a50f"/>
+    <rect x="71" y="154.3" width="20" height="1.4" rx="0.7" fill="#16357d"/>
+  </g>
+</svg>
