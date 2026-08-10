@@ -387,8 +387,10 @@ function Sucesso({ protocolo, email }: { protocolo: string; email: string }) {
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-tea-turquesa-100 text-2xl text-tea-turquesa-800">
         ✓
       </div>
-      <h2 className="mt-4 text-xl font-bold text-tea-marinho">Solicitação registrada</h2>
-      <p className="mt-2 text-slate-600">Guarde o número do seu protocolo:</p>
+      <h2 className="mt-4 text-xl font-bold text-tea-marinho">Solicitação registrada 💙</h2>
+      <p className="mt-2 text-slate-600">
+        Sua demanda já chegou ao time responsável. Guarde o número do seu protocolo:
+      </p>
 
       <p className="mx-auto mt-4 w-fit rounded-lg bg-tea-marinho px-6 py-3 font-mono text-xl font-bold tracking-wider text-white">
         {protocolo}
@@ -396,7 +398,7 @@ function Sucesso({ protocolo, email }: { protocolo: string; email: string }) {
 
       <p className="mt-4 text-sm text-slate-600">
         Enviamos uma confirmação para <strong>{email}</strong>. Com o protocolo e o seu CPF você
-        acompanha o andamento e responde ao RH a qualquer momento.
+        acompanha cada etapa e responde ao RH a qualquer momento. Conte com a gente!
       </p>
 
       <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">

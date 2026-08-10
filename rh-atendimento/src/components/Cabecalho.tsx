@@ -19,10 +19,10 @@ export function Cabecalho({ compacto = false }: { compacto?: boolean }) {
           {!compacto && (
             <nav className="flex items-center gap-4 text-sm font-semibold">
               <Link href="/consulta" className="text-slate-600 hover:text-tea-turquesa-700">
-                Acompanhar chamado
+                Acompanhar
               </Link>
               <Link href="/abrir" className="botao-primario !px-4 !py-2 text-sm">
-                Abrir chamado
+                Registrar solicitação
               </Link>
             </nav>
           )}
@@ -42,7 +42,8 @@ export function Rodape() {
         <p className="mt-1 font-medium text-slate-400">Conectar · Acolher · Desenvolver</p>
         <p className="mt-2">
           Os dados informados aqui são usados apenas para tratar sua solicitação de RH, conforme a
-          LGPD. Atestados e documentos ficam em armazenamento restrito à equipe de RH.
+          LGPD. Atestados e documentos ficam em armazenamento restrito à equipe de RH. Conte com a
+          gente 💙
         </p>
         <p className="mt-3">
           <Link href="/rh" className="font-semibold text-slate-500 hover:text-tea-turquesa-700">

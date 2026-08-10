@@ -120,11 +120,12 @@ export async function emailChamadoAberto(dados: {
     titulo: "Recebemos sua solicitação",
     linhas: [
       `Olá, ${escapar(dados.nome.split(" ")[0])}!`,
-      `Sua solicitação foi registrada com o protocolo ${negrito(dados.protocolo)}.`,
+      `Sua solicitação foi registrada com o protocolo ${negrito(dados.protocolo)} e já chegou ao time responsável.`,
       `Assunto: ${escapar(dados.assunto)}.`,
-      "Guarde este número: com ele e seu CPF você acompanha o andamento e responde ao RH a qualquer momento.",
+      "Guarde este número: com ele e seu CPF você acompanha cada etapa e responde ao RH a qualquer momento.",
+      "Conte com a gente! 💙",
     ],
-    botao: { texto: "Acompanhar chamado", url: link },
+    botao: { texto: "Acompanhar solicitação", url: link },
   });
 }
 

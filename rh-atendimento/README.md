@@ -38,6 +38,9 @@ O catálogo de assuntos é o do processo desenhado pelo RH:
 - **PJ**: Contratos · Distratos · Mudança de chave Pix · Pagamentos
 - **CLT e Estágio**: Benefícios · Pagamento · Afastamento · Férias · Auxílio creche ·
   Ponto eletrônico (atestados)
+- **Todos**: Outros assuntos — dúvida geral, declaração/documento, atualização cadastral,
+  sugestão ou elogio. É a garantia de que ninguém fica sem caminho por não achar o assunto
+  exato na lista, como promete a comunicação do canal.
 
 Tudo isso está em [`src/lib/catalogo.ts`](src/lib/catalogo.ts). Para criar um novo tipo de
 chamado, com campos próprios e anexo obrigatório, basta acrescentar um item nesse arquivo —

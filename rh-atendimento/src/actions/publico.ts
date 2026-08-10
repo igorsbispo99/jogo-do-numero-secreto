@@ -38,6 +38,8 @@ export type ChamadoPublico = {
   >;
   mensagens: Pick<Mensagem, "id" | "autor_tipo" | "autor_nome" | "corpo" | "criado_em">[];
   anexos: AnexoComLink[];
+  /** Etapas do atendimento, para o colaborador acompanhar o andamento. */
+  etapas: { id: string; descricao: string; criado_em: string }[];
 };
 
 export type EstadoConsulta =
@@ -242,7 +244,7 @@ async function carregarChamadoPublico(
 
   if (!chamado || chamado.solicitante_cpf !== cpf) return null;
 
-  const [{ data: mensagens }, { data: anexos }] = await Promise.all([
+  const [{ data: mensagens }, { data: anexos }, { data: etapas }] = await Promise.all([
     supabase
       .from("chamado_mensagens")
       .select("id, autor_tipo, autor_nome, corpo, criado_em")
@@ -254,6 +256,12 @@ async function carregarChamadoPublico(
       .select("*")
       .eq("chamado_id", chamado.id)
       .order("criado_em", { ascending: true }),
+    supabase
+      .from("chamado_eventos")
+      .select("id, descricao, criado_em")
+      .eq("chamado_id", chamado.id)
+      .eq("publico", true) // movimentações de bastidor ficam só para o RH
+      .order("criado_em", { ascending: true }),
   ]);
 
   const { solicitante_cpf: _cpf, id: _id, ...publico } = chamado;
@@ -262,6 +270,7 @@ async function carregarChamadoPublico(
     chamado: publico as ChamadoPublico["chamado"],
     mensagens: (mensagens ?? []) as ChamadoPublico["mensagens"],
     anexos: await assinarAnexos((anexos ?? []) as Anexo[]),
+    etapas: (etapas ?? []) as ChamadoPublico["etapas"],
   };
 }
 

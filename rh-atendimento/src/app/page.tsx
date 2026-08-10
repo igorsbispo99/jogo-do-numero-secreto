@@ -28,13 +28,15 @@ const PASSOS = [
   },
   {
     titulo: "2. Receba o protocolo",
-    texto: "Você recebe um número por e-mail. É com ele e seu CPF que você acompanha tudo.",
+    texto:
+      "Você recebe um número por e-mail. É com ele e seu CPF que você acompanha cada etapa.",
     barra: "bg-tea-turquesa-500",
     numero: "text-tea-turquesa-700",
   },
   {
     titulo: "3. Converse com o RH",
-    texto: "As respostas ficam registradas no chamado. Nada se perde em conversa de WhatsApp.",
+    texto:
+      "As respostas ficam registradas no seu protocolo. Nada se perde em conversa de WhatsApp.",
     barra: "bg-tea-ambar-500",
     numero: "text-tea-ambar-700",
   },
@@ -49,25 +51,39 @@ export default function PaginaInicial() {
         <section className="text-center">
           <LogoTea className="mx-auto mb-6 h-36 w-auto" />
           <p className="text-sm font-semibold uppercase tracking-widest text-tea-turquesa-700">
-            Central de Atendimento do RH
+            Canal de atendimento do RH
           </p>
           <h1 className="mt-3 text-3xl font-bold text-tea-marinho sm:text-4xl">
-            Um único lugar para falar com o RH
+            Bem-vindo ao nosso canal de atendimento de RH 💙
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-slate-600">
-            Contratos, pagamentos, benefícios, férias, afastamentos, atestados e ponto. Registre sua
-            solicitação aqui e acompanhe pelo número do protocolo — sem depender de WhatsApp, e-mail
-            ou de passar na sala do RH.
+            Criamos este espaço para tornar o seu dia a dia mais simples e garantir que você tenha um
+            canal fácil, organizado e seguro para falar com a gente.
+          </p>
+          <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+            Por aqui, colaboradores e prestadores de serviço registram dúvidas e solicitações sobre
+            contratos, pagamentos, benefícios, férias, afastamentos, atestados, ponto e outros
+            assuntos relacionados ao RH.
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link href="/abrir" className="botao-primario w-full sm:w-auto">
-              Abrir um chamado
+              Registrar solicitação
             </Link>
             <Link href="/consulta" className="botao-secundario w-full sm:w-auto">
-              Acompanhar um chamado
+              Acompanhar pelo protocolo
             </Link>
           </div>
+        </section>
+
+        <section className="mt-12 rounded-xl border border-tea-turquesa-200 bg-tea-turquesa-50 p-6 text-center">
+          <p className="text-base font-bold text-tea-turquesa-800">
+            📌 É simples: registre sua solicitação e acompanhe pelo número do protocolo.
+          </p>
+          <p className="mx-auto mt-2 max-w-3xl text-sm leading-relaxed text-slate-700">
+            Assim, sua demanda fica registrada, chega ao time responsável e você consegue acompanhar
+            cada etapa — sem precisar buscar atendimento por WhatsApp, e-mail ou ir até a sala do RH.
+          </p>
         </section>
 
         <section className="mt-14">
@@ -116,10 +132,20 @@ export default function PaginaInicial() {
         <section className="mt-14 rounded-xl border border-tea-laranja-200 bg-tea-laranja-50 p-6">
           <h2 className="text-base font-bold text-tea-laranja-800">Urgência médica ou risco?</h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-700">
-            A central é para assuntos administrativos de RH. Situações de emergência, acidente de
+            Este canal é para assuntos administrativos de RH. Situações de emergência, acidente de
             trabalho ou risco à segurança devem ser comunicadas imediatamente ao seu gestor e à
             equipe de RH pelos canais internos, além do registro aqui.
           </p>
+        </section>
+
+        <section className="mt-12 text-center">
+          <p className="text-lg font-bold text-tea-marinho">
+            Um único canal, mais organização e um RH mais próximo de você. 🤝
+          </p>
+          <p className="mt-2 text-slate-600">Conte com a gente! 💙</p>
+          <Link href="/abrir" className="botao-primario mt-6 inline-flex">
+            Registrar minha solicitação
+          </Link>
         </section>
       </main>
 
