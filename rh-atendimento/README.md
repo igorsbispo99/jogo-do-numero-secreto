@@ -245,13 +245,19 @@ Cada cor tem tons pastéis (`50`, `100`, `200`) para fundos e tons escuros (`600
 4.5:1 — é o que garante leitura para quem enxerga pouco ou está no celular sob sol.
 Se for criar telas novas, mantenha a dupla "fundo pastel + texto escuro da mesma cor".
 
-**Logo.** O arquivo [`public/logo-grupo-tea.svg`](public/logo-grupo-tea.svg) é uma versão
-vetorial feita com as cores da paleta, usada na página inicial e no login.
+**Logo.** A marca oficial do Grupo TEA está em `public/`, com o fundo branco já removido:
 
-Para usar o arquivo oficial, coloque a arte em `public/logo-grupo-tea.png` (fundo
-transparente, altura de pelo menos 400 px) e faça o deploy. O sistema detecta o arquivo
-sozinho e passa a usá-lo — não é preciso mexer em código. O símbolo do cabeçalho é
-desenhado direto em SVG (`src/components/Logo.tsx`), por isso fica nítido em qualquer tela.
+| Arquivo | Onde é usado |
+|---|---|
+| `logo-grupo-tea.png` | Página inicial e tela de login (logo completo) |
+| `simbolo-grupo-tea.png` | Cabeçalho de todas as páginas (só o círculo) |
+| `logo-grupo-tea.svg` | Reserva: aparece se o PNG for removido |
+| `icone.svg` | Ícone da aba do navegador |
+
+Para trocar a arte no futuro, basta substituir os PNGs mantendo os mesmos nomes — não é
+preciso mexer em código. Use sempre fundo transparente; o `simbolo-` deve ser um recorte
+quadrado só do círculo, porque no cabeçalho ele aparece com cerca de 40 px de altura e o
+logo completo ficaria ilegível nesse tamanho.
 
 ## 9. Comandos
 

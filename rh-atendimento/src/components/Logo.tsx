@@ -54,6 +54,30 @@ export function SimboloTea({ className = "h-10 w-10" }: { className?: string }) 
 }
 
 /**
+ * Símbolo usado nos cabeçalhos.
+ *
+ * Se existir /public/simbolo-grupo-tea.png (recorte quadrado do círculo do
+ * logo oficial), ele é usado. Caso contrário, cai no desenho em SVG acima -
+ * que sempre funciona, em qualquer tamanho.
+ */
+export function MarcaTea({ className = "h-10 w-10" }: { className?: string }) {
+  const [temOficial, setTemOficial] = useState(false);
+
+  useEffect(() => {
+    const oficial = new window.Image();
+    oficial.onload = () => setTemOficial(true);
+    oficial.src = "/simbolo-grupo-tea.png";
+  }, []);
+
+  if (!temOficial) return <SimboloTea className={className} />;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/simbolo-grupo-tea.png" alt="Grupo TEA" className={`${className} object-contain`} />
+  );
+}
+
+/**
  * Logo completo (símbolo + assinatura).
  *
  * Começa sempre pelo SVG que acompanha o projeto - assim nunca aparece imagem

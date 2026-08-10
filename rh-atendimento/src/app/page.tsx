@@ -47,7 +47,7 @@ export default function PaginaInicial() {
 
       <main className="mx-auto max-w-5xl px-4 py-12">
         <section className="text-center">
-          <LogoTea className="mx-auto mb-6 h-40 w-auto" />
+          <LogoTea className="mx-auto mb-6 h-36 w-auto" />
           <p className="text-sm font-semibold uppercase tracking-widest text-tea-turquesa-700">
             Central de Atendimento do RH
           </p>
