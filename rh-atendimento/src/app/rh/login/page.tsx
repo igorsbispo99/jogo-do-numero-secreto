@@ -12,7 +12,9 @@ export default function PaginaLogin() {
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <LogoTea className="mx-auto mb-4 h-24 w-auto" />
+          <div className="mx-auto mb-4 w-fit rounded-2xl bg-white px-5 py-4 ring-1 ring-slate-200">
+            <LogoTea className="h-24 w-auto" />
+          </div>
           <h1 className="text-xl font-bold text-tea-marinho">Painel do RH</h1>
           <p className="mt-1 text-sm text-slate-500">
             Acesso restrito à equipe de Recursos Humanos.

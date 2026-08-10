@@ -47,7 +47,11 @@ export default function PaginaInicial() {
 
       <main className="mx-auto max-w-5xl px-4 py-12">
         <section className="text-center">
-          <LogoTea className="mx-auto mb-6 h-40 w-auto" />
+          {/* Cartão branco atrás do logo: assim a arte fica bem apresentada
+              mesmo quando o arquivo oficial não tem fundo transparente. */}
+          <div className="mx-auto mb-6 w-fit rounded-2xl bg-white px-6 py-5 ring-1 ring-slate-200">
+            <LogoTea className="h-36 w-auto" />
+          </div>
           <p className="text-sm font-semibold uppercase tracking-widest text-tea-turquesa-700">
             Central de Atendimento do RH
           </p>

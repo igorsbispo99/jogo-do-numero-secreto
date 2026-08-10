@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { sair } from "@/actions/rh";
-import { FaixaMarca, SimboloTea } from "@/components/Logo";
+import { FaixaMarca, MarcaTea } from "@/components/Logo";
 import { iniciais } from "@/lib/format";
 import type { AgenteRh } from "@/lib/supabase/server";
 
@@ -11,7 +11,7 @@ export function CabecalhoRh({ agente }: { agente: AgenteRh }) {
       <div className="border-b border-slate-200">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <Link href="/rh" className="flex items-center gap-3">
-            <SimboloTea className="h-10 w-10 shrink-0" />
+            <MarcaTea className="h-10 w-10 shrink-0" />
             <span className="leading-tight">
               <span className="block text-sm font-bold text-tea-marinho">Painel do RH</span>
               <span className="block text-xs text-slate-500">Central de atendimento</span>
