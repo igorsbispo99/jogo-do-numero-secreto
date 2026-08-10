@@ -11,7 +11,7 @@ export default function PaginaAbrirChamado() {
     <>
       <Cabecalho compacto />
       <main className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="mb-2 text-2xl font-bold text-slate-900">Abrir chamado</h1>
+        <h1 className="mb-2 text-2xl font-bold text-tea-marinho">Abrir chamado</h1>
         <p className="mb-8 text-slate-600">
           Leva menos de dois minutos. Ao final você recebe um protocolo por e-mail.
         </p>

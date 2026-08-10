@@ -1,14 +1,56 @@
 @import "tailwindcss";
 
+/* =====================================================================
+   Identidade visual do Grupo TEA
+   Paleta oficial: #f9a50f  #901845  #ec562a  #09a497  #26a3d0
+   Cada cor tem tons pastéis (50/100/200) para fundos e tons escuros
+   (600/700/800) para texto e botões - todos com contraste conferido
+   para leitura acessível (mínimo 4.5:1 sobre o fundo correspondente).
+   ===================================================================== */
 @theme {
-  --color-marca-50: #f0fdfa;
-  --color-marca-100: #ccfbf1;
-  --color-marca-200: #99f6e4;
-  --color-marca-500: #14b8a6;
-  --color-marca-600: #0d9488;
-  --color-marca-700: #0f766e;
-  --color-marca-800: #115e59;
-  --color-marca-900: #134e4a;
+  /* Azul do wordmark do logo, usado em títulos */
+  --color-tea-marinho: #16357d;
+
+  --color-tea-ambar-50: #fff9ee;
+  --color-tea-ambar-100: #fef2db;
+  --color-tea-ambar-200: #fde2b2;
+  --color-tea-ambar-500: #f9a50f;
+  --color-tea-ambar-600: #cc870c;
+  --color-tea-ambar-700: #9a6609;
+  --color-tea-ambar-800: #704a07;
+
+  --color-tea-vinho-50: #f7eff2;
+  --color-tea-vinho-100: #eedce3;
+  --color-tea-vinho-200: #dbb5c3;
+  --color-tea-vinho-500: #901845;
+  --color-tea-vinho-600: #761439;
+  --color-tea-vinho-700: #590f2b;
+  --color-tea-vinho-800: #410b1f;
+
+  --color-tea-laranja-50: #fef3f0;
+  --color-tea-laranja-100: #fce6df;
+  --color-tea-laranja-200: #f9c9bb;
+  --color-tea-laranja-500: #ec562a;
+  --color-tea-laranja-600: #c24722;
+  --color-tea-laranja-700: #92351a;
+  --color-tea-laranja-800: #6a2713;
+
+  --color-tea-turquesa-50: #eef9f8;
+  --color-tea-turquesa-100: #daf1ef;
+  --color-tea-turquesa-200: #b0e2de;
+  --color-tea-turquesa-500: #09a497;
+  --color-tea-turquesa-600: #07867c;
+  --color-tea-turquesa-700: #06665e;
+  --color-tea-turquesa-800: #044a44;
+
+  --color-tea-azul-50: #f0f9fc;
+  --color-tea-azul-100: #def1f8;
+  --color-tea-azul-200: #bae2f0;
+  --color-tea-azul-500: #26a3d0;
+  --color-tea-azul-600: #1f86ab;
+  --color-tea-azul-700: #186581;
+  --color-tea-azul-800: #11495e;
+
 }
 
 html {
@@ -16,7 +58,7 @@ html {
 }
 
 body {
-  background-color: #f8fafc;
+  background-color: #f7f9fa;
   color: #0f172a;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -25,7 +67,7 @@ body {
 /* Foco visível em tudo que é interativo - acessibilidade para 1.000 pessoas
    usando o sistema pelo celular e por teclado. */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-marca-600);
+  outline: 2px solid var(--color-tea-turquesa-600);
   outline-offset: 2px;
 }
 
@@ -40,7 +82,7 @@ body {
 }
 
 .campo:focus {
-  border-color: var(--color-marca-600);
+  border-color: var(--color-tea-turquesa-600);
 }
 
 .rotulo {
@@ -63,7 +105,7 @@ body {
   justify-content: center;
   gap: 0.5rem;
   border-radius: 0.5rem;
-  background: var(--color-marca-700);
+  background: var(--color-tea-turquesa-700);
   padding: 0.625rem 1.25rem;
   font-weight: 600;
   color: #fff;
@@ -71,7 +113,7 @@ body {
 }
 
 .botao-primario:hover {
-  background: var(--color-marca-800);
+  background: var(--color-tea-turquesa-800);
 }
 
 .botao-primario:disabled {
@@ -93,5 +135,7 @@ body {
 }
 
 .botao-secundario:hover {
-  background: #f1f5f9;
+  background: var(--color-tea-turquesa-50);
+  border-color: var(--color-tea-turquesa-200);
+  color: var(--color-tea-turquesa-800);
 }

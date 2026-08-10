@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { abrirChamado, type EstadoAbertura } from "@/actions/publico";
+import { FaixaMarca } from "@/components/Logo";
 import {
   categoriasDo,
   type Categoria,
@@ -15,6 +16,18 @@ import { MAX_ANEXOS } from "@/lib/dominio";
 import { mascararCpf } from "@/lib/format";
 
 const ESTADO_INICIAL: EstadoAbertura = { estado: "inicial" };
+
+/* As categorias se revezam nas cinco cores da marca, para ficar mais fácil
+   reconhecer visualmente o caminho percorrido.
+   Usa sombra interna (e não borda) porque a classe .cartao já define a borda
+   do card e venceria a disputa de estilo. */
+const ACENTOS = [
+  "shadow-[inset_5px_0_0_0_var(--color-tea-azul-500)]",
+  "shadow-[inset_5px_0_0_0_var(--color-tea-turquesa-500)]",
+  "shadow-[inset_5px_0_0_0_var(--color-tea-ambar-500)]",
+  "shadow-[inset_5px_0_0_0_var(--color-tea-laranja-500)]",
+  "shadow-[inset_5px_0_0_0_var(--color-tea-vinho-500)]",
+];
 
 export function FormularioChamado() {
   const [estado, acao] = useActionState(abrirChamado, ESTADO_INICIAL);
@@ -51,7 +64,7 @@ export function FormularioChamado() {
                 key={opcao.slug}
                 type="button"
                 onClick={() => setVinculo(opcao.slug)}
-                className="cartao p-5 text-left transition hover:border-marca-600 hover:bg-marca-50"
+                className="cartao p-5 text-left transition hover:border-tea-turquesa-600 hover:bg-tea-turquesa-50"
               >
                 <span className="block text-base font-bold text-slate-900">{opcao.titulo}</span>
                 <span className="mt-1 block text-sm text-slate-500">{opcao.descricao}</span>
@@ -64,12 +77,14 @@ export function FormularioChamado() {
       {passo === 2 && vinculo && (
         <Passo titulo="Sobre o que é a sua solicitação?">
           <div className="grid gap-3 sm:grid-cols-2">
-            {categoriasDo(vinculo).map((opcao) => (
+            {categoriasDo(vinculo).map((opcao, indice) => (
               <button
                 key={opcao.slug}
                 type="button"
                 onClick={() => setCategoria(opcao)}
-                className="cartao p-4 text-left transition hover:border-marca-600 hover:bg-marca-50"
+                className={`cartao p-4 text-left transition hover:bg-tea-turquesa-50 ${
+                  ACENTOS[indice % ACENTOS.length]
+                }`}
               >
                 <span className="block font-bold text-slate-900">{opcao.titulo}</span>
                 {opcao.descricao && (
@@ -89,7 +104,7 @@ export function FormularioChamado() {
                 key={opcao.slug}
                 type="button"
                 onClick={() => setSubcategoria(opcao)}
-                className="cartao p-4 text-left transition hover:border-marca-600 hover:bg-marca-50"
+                className="cartao p-4 text-left transition hover:border-tea-turquesa-600 hover:bg-tea-turquesa-50"
               >
                 <span className="block font-semibold text-slate-900">{opcao.titulo}</span>
                 {opcao.descricao && (
@@ -266,7 +281,7 @@ export function FormularioChamado() {
                 multiple
                 required={subcategoria.anexoObrigatorio}
                 accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-marca-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-marca-800"
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-tea-turquesa-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-tea-turquesa-800"
               />
               <p className="mt-1 text-xs text-slate-500">
                 {subcategoria.anexoAjuda ??
@@ -354,7 +369,7 @@ function Trilha({
           <button
             type="button"
             onClick={() => aoVoltar(item.destino)}
-            className="rounded font-semibold text-marca-700 underline-offset-4 hover:underline"
+            className="rounded font-semibold text-tea-turquesa-700 underline-offset-4 hover:underline"
           >
             {item.rotulo}
           </button>
@@ -366,14 +381,16 @@ function Trilha({
 
 function Sucesso({ protocolo, email }: { protocolo: string; email: string }) {
   return (
-    <div className="cartao p-8 text-center">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl">
+    <div className="cartao overflow-hidden text-center">
+      <FaixaMarca />
+      <div className="p-8">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-tea-turquesa-100 text-2xl text-tea-turquesa-800">
         ✓
       </div>
-      <h2 className="mt-4 text-xl font-bold text-slate-900">Solicitação registrada</h2>
+      <h2 className="mt-4 text-xl font-bold text-tea-marinho">Solicitação registrada</h2>
       <p className="mt-2 text-slate-600">Guarde o número do seu protocolo:</p>
 
-      <p className="mx-auto mt-4 w-fit rounded-lg bg-slate-900 px-6 py-3 font-mono text-xl font-bold tracking-wider text-white">
+      <p className="mx-auto mt-4 w-fit rounded-lg bg-tea-marinho px-6 py-3 font-mono text-xl font-bold tracking-wider text-white">
         {protocolo}
       </p>
 
@@ -394,6 +411,7 @@ function Sucesso({ protocolo, email }: { protocolo: string; email: string }) {
         <a href="/abrir" className="botao-secundario w-full sm:w-auto">
           Abrir outro chamado
         </a>
+      </div>
       </div>
     </div>
   );

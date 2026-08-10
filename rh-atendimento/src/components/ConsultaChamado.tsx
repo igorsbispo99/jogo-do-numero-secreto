@@ -102,7 +102,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-mono text-sm font-bold text-slate-500">{chamado.protocolo}</p>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">{chamado.assunto}</h2>
+            <h2 className="mt-1 text-xl font-bold text-tea-marinho">{chamado.assunto}</h2>
             <p className="mt-1 text-sm text-slate-500">
               Aberto em {formatarDataHora(chamado.criado_em)} · última atualização{" "}
               {tempoRelativo(chamado.atualizado_em)}
@@ -130,7 +130,14 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
 
       <div className="cartao divide-y divide-slate-100">
         {mensagens.map((mensagem) => (
-          <article key={mensagem.id} className="p-5">
+          <article
+            key={mensagem.id}
+            className={`p-5 ${
+              mensagem.autor_tipo === "rh"
+                ? "border-l-4 border-tea-turquesa-500 bg-tea-turquesa-50"
+                : ""
+            }`}
+          >
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-slate-900">
                 {mensagem.autor_tipo === "rh" ? `${mensagem.autor_nome} · RH` : mensagem.autor_nome}
@@ -155,7 +162,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
                     href={anexo.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-medium text-marca-700 hover:underline"
+                    className="font-medium text-tea-turquesa-700 hover:underline"
                   >
                     {anexo.nome_arquivo}
                   </a>
@@ -203,7 +210,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
               type="file"
               multiple
               accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-marca-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-marca-800"
+              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-tea-turquesa-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-tea-turquesa-800"
             />
             <p className="mt-1 text-xs text-slate-500">Até {MAX_ANEXOS} arquivos, 8 MB cada.</p>
           </div>
@@ -227,7 +234,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
         <button
           type="button"
           onClick={() => setVisao(null)}
-          className="text-sm font-semibold text-slate-500 hover:text-marca-700"
+          className="text-sm font-semibold text-slate-500 hover:text-tea-turquesa-700"
         >
           Consultar outro protocolo
         </button>

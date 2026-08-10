@@ -60,7 +60,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
       <CabecalhoRh agente={agente} />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
-        <Link href="/rh" className="text-sm font-semibold text-slate-500 hover:text-marca-700">
+        <Link href="/rh" className="text-sm font-semibold text-slate-500 hover:text-tea-turquesa-700">
           ← Voltar para a fila
         </Link>
 
@@ -73,7 +73,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                 <EtiquetaStatus status={dados.status} />
                 <EtiquetaPrioridade prioridade={dados.prioridade} />
               </div>
-              <h1 className="mt-2 text-xl font-bold text-slate-900">{dados.assunto}</h1>
+              <h1 className="mt-2 text-xl font-bold text-tea-marinho">{dados.assunto}</h1>
               <p className="mt-1 text-sm text-slate-500">
                 Aberto em {formatarDataHora(dados.criado_em)}
                 {dados.primeira_resposta_em &&
@@ -112,7 +112,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                 return (
                   <article
                     key={mensagem.id}
-                    className={`p-5 ${mensagem.interna ? "bg-amber-50" : ""}`}
+                    className={`p-5 ${mensagem.interna ? "bg-tea-ambar-50" : ""}`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-bold text-slate-900">
@@ -125,7 +125,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                               : "Sistema"}
                         </span>
                         {mensagem.interna && (
-                          <span className="ml-2 rounded-full bg-amber-200 px-2 py-0.5 text-xs font-bold text-amber-900">
+                          <span className="ml-2 rounded-full bg-tea-ambar-200 px-2 py-0.5 text-xs font-bold text-tea-ambar-800">
                             Nota interna
                           </span>
                         )}
@@ -145,7 +145,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                               href={anexo.url ?? "#"}
                               target="_blank"
                               rel="noreferrer"
-                              className="font-medium text-marca-700 hover:underline"
+                              className="font-medium text-tea-turquesa-700 hover:underline"
                             >
                               📎 {anexo.nome_arquivo}
                             </a>
@@ -205,7 +205,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                         href={anexo.url ?? "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-medium text-marca-700 hover:underline"
+                        className="font-medium text-tea-turquesa-700 hover:underline"
                       >
                         {anexo.nome_arquivo}
                       </a>

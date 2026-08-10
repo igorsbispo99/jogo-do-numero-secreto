@@ -40,25 +40,38 @@ function montarHtml(envio: Envio): string {
 
   const botao = envio.botao
     ? `<p style="margin:24px 0"><a href="${escapar(envio.botao.url)}"
-         style="background:#0f766e;color:#fff;padding:12px 20px;border-radius:8px;
+         style="background:#06665e;color:#fff;padding:12px 20px;border-radius:8px;
                 text-decoration:none;font-weight:600;display:inline-block">
          ${escapar(envio.botao.texto)}</a></p>`
     : "";
+
+  // Faixa com as cinco cores da marca, no topo do e-mail.
+  const faixa = ["#26a3d0", "#09a497", "#f9a50f", "#ec562a", "#901845"]
+    .map(
+      (cor) =>
+        `<td width="20%" height="5" style="background:${cor};font-size:0;line-height:0">&nbsp;</td>`,
+    )
+    .join("");
 
   return `<!doctype html>
 <html lang="pt-BR"><body style="margin:0;background:#f1f5f9;padding:24px;
   font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
-      <table role="presentation" width="100%" style="max-width:560px;background:#fff;
-        border-radius:12px;padding:32px;border:1px solid #e2e8f0">
-        <tr><td>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+        style="max-width:560px;background:#fff;border-radius:12px;overflow:hidden;
+               border:1px solid #e2e8f0">
+        <tr>${faixa}</tr>
+        <tr><td colspan="5" style="padding:32px">
           <p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;
-            text-transform:uppercase;color:#0f766e;font-weight:700">Grupo TEA · RH</p>
-          <h1 style="margin:0 0 16px;font-size:20px;color:#0f172a">${escapar(envio.titulo)}</h1>
+            text-transform:uppercase;color:#06665e;font-weight:700">Grupo TEA · RH</p>
+          <h1 style="margin:0 0 16px;font-size:20px;color:#16357d">${escapar(envio.titulo)}</h1>
           ${corpo}
           ${botao}
           <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
+          <p style="margin:0 0 6px;font-size:12px;color:#16357d;font-weight:600">
+            TEA Clínica e Desenvolvimento LTDA · Conectar • Acolher • Desenvolver
+          </p>
           <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5">
             ${escapar(envio.rodape ?? "Este e-mail é automático, não responda por aqui. Use a central de atendimento para falar com o RH.")}
           </p>
