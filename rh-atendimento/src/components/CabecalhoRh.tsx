@@ -14,7 +14,7 @@ export function CabecalhoRh({ agente }: { agente: AgenteRh }) {
             <MarcaTea className="h-10 w-10 shrink-0" />
             <span className="leading-tight">
               <span className="block text-sm font-bold text-tea-marinho">Painel do RH</span>
-              <span className="block text-xs text-slate-500">Central de atendimento</span>
+              <span className="block text-xs text-slate-500">Central de Atendimento</span>
             </span>
           </Link>
 

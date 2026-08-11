@@ -73,7 +73,7 @@ function montarHtml(envio: Envio): string {
             TEA Clínica e Desenvolvimento LTDA · Conectar • Acolher • Desenvolver
           </p>
           <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5">
-            ${escapar(envio.rodape ?? "Este e-mail é automático, não responda por aqui. Use a central de atendimento para falar com o RH.")}
+            ${escapar(envio.rodape ?? "Este e-mail é automático, não responda por aqui. Use a Central de Atendimento para falar com o RH.")}
           </p>
         </td></tr>
       </table>
@@ -204,6 +204,6 @@ export async function emailAvisoRh(dados: {
       `Assunto: ${escapar(dados.assunto)}`,
     ],
     botao: { texto: "Abrir painel do RH", url: link },
-    rodape: "Aviso interno da central de atendimento do RH.",
+    rodape: "Aviso interno da Central de Atendimento do RH.",
   });
 }
