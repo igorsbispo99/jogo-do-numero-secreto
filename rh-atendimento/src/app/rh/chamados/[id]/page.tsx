@@ -65,7 +65,7 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
 
       <main className="mx-auto max-w-6xl px-4 py-8">
         <Link href="/rh" className="text-sm font-semibold text-slate-500 hover:text-tea-turquesa-700">
-          ← Voltar para a fila
+          ← Voltar para os chamados
         </Link>
 
         <div className="cartao mt-4 p-6">
