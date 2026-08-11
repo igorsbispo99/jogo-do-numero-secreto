@@ -26,11 +26,8 @@ export const novoChamadoSchema = z.object({
   vinculo: vinculoSchema,
   categoria: z.string().trim().min(1).max(80),
   subcategoria: z.string().trim().min(1).max(80),
-  descricao: z
-    .string()
-    .trim()
-    .min(15, "Descreva sua solicitação com pelo menos 15 caracteres.")
-    .max(5000),
+  // O tamanho mínimo é conferido na ação, porque depende do assunto escolhido.
+  descricao: z.string().trim().max(5000),
 });
 
 export type NovoChamado = z.infer<typeof novoChamadoSchema>;
@@ -77,10 +74,17 @@ export function validarCamposExtras(
   const sub = acharSubcategoria(vinculo, categoria, subcategoria);
   if (!sub) return { ok: false, erro: "Categoria inválida. Recomece a solicitação." };
 
+  const valorDe = (nome: string) => {
+    const bruto = formData.get(`extra_${nome}`);
+    return typeof bruto === "string" ? bruto.trim() : "";
+  };
+
   const dados: Record<string, string> = {};
   for (const campo of sub.campos ?? []) {
-    const bruto = formData.get(`extra_${campo.nome}`);
-    const valor = typeof bruto === "string" ? bruto.trim() : "";
+    // Campo que só aparece em certa condição não é cobrado quando ela não vale.
+    if (campo.mostrarSe && valorDe(campo.mostrarSe.campo) !== campo.mostrarSe.valor) continue;
+
+    const valor = valorDe(campo.nome);
 
     if (!valor) {
       if (campo.obrigatorio) return { ok: false, erro: `Preencha o campo "${campo.label}".` };

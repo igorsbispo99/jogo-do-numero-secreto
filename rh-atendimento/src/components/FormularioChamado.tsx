@@ -7,6 +7,7 @@ import { abrirChamado, type EstadoAbertura } from "@/actions/publico";
 import { CampoAnexos } from "@/components/CampoAnexos";
 import { FaixaMarca } from "@/components/Logo";
 import {
+  type CampoExtra,
   categoriasDo,
   type Categoria,
   type Subcategoria,
@@ -35,6 +36,16 @@ export function FormularioChamado() {
   const [categoria, setCategoria] = useState<Categoria | null>(null);
   const [subcategoria, setSubcategoria] = useState<Subcategoria | null>(null);
   const [cpf, setCpf] = useState("");
+  /* Respostas dos campos específicos do assunto. Ficam no estado porque um
+     campo pode depender da resposta de outro - por exemplo, o e-mail
+     corporativo só é pedido a quem disse que tem um. */
+  const [extras, setExtras] = useState<Record<string, string>>({});
+
+  const anotarExtra = (nome: string, valor: string) =>
+    setExtras((atuais) => ({ ...atuais, [nome]: valor }));
+
+  const visivel = (campo: CampoExtra) =>
+    !campo.mostrarSe || extras[campo.mostrarSe.campo] === campo.mostrarSe.valor;
 
   if (estado.estado === "ok") {
     return <Sucesso protocolo={estado.protocolo} email={estado.email} />;
@@ -53,6 +64,7 @@ export function FormularioChamado() {
           if (destino <= 1) setVinculo(null);
           if (destino <= 2) setCategoria(null);
           if (destino <= 3) setSubcategoria(null);
+          setExtras({});
         }}
       />
 
@@ -103,7 +115,10 @@ export function FormularioChamado() {
               <button
                 key={opcao.slug}
                 type="button"
-                onClick={() => setSubcategoria(opcao)}
+                onClick={() => {
+                  setSubcategoria(opcao);
+                  setExtras({});
+                }}
                 className="cartao p-4 text-left transition hover:border-tea-turquesa-600 hover:bg-tea-turquesa-50"
               >
                 <span className="block font-semibold text-slate-900">{opcao.titulo}</span>
@@ -202,7 +217,7 @@ export function FormularioChamado() {
 
             {(subcategoria.campos?.length ?? 0) > 0 && (
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                {subcategoria.campos?.map((campo) => (
+                {(subcategoria.campos ?? []).filter(visivel).map((campo) => (
                   <div
                     key={campo.nome}
                     className={campo.tipo === "textarea" ? "sm:col-span-2" : undefined}
@@ -217,7 +232,8 @@ export function FormularioChamado() {
                         name={`extra_${campo.nome}`}
                         className="campo"
                         required={campo.obrigatorio}
-                        defaultValue=""
+                        value={extras[campo.nome] ?? ""}
+                        onChange={(e) => anotarExtra(campo.nome, e.target.value)}
                       >
                         <option value="" disabled>
                           Selecione
@@ -235,6 +251,8 @@ export function FormularioChamado() {
                         className="campo"
                         rows={3}
                         required={campo.obrigatorio}
+                        value={extras[campo.nome] ?? ""}
+                        onChange={(e) => anotarExtra(campo.nome, e.target.value)}
                       />
                     ) : (
                       <input
@@ -242,6 +260,8 @@ export function FormularioChamado() {
                         name={`extra_${campo.nome}`}
                         className="campo"
                         required={campo.obrigatorio}
+                        value={extras[campo.nome] ?? ""}
+                        onChange={(e) => anotarExtra(campo.nome, e.target.value)}
                         type={
                           campo.tipo === "data" ? "date" : campo.tipo === "numero" ? "number" : "text"
                         }
@@ -257,14 +277,14 @@ export function FormularioChamado() {
 
             <div className="mt-4">
               <label className="rotulo" htmlFor="descricao">
-                Descreva sua solicitação *
+                Descreva sua solicitação {subcategoria.descricaoDispensavel ? "(opcional)" : "*"}
               </label>
               <textarea
                 id="descricao"
                 name="descricao"
                 rows={5}
-                required
-                minLength={15}
+                required={!subcategoria.descricaoDispensavel}
+                minLength={subcategoria.descricaoDispensavel ? undefined : 15}
                 className="campo"
                 placeholder="Conte o que aconteceu e o que você precisa. Quanto mais claro, mais rápido o RH resolve."
               />
