@@ -117,20 +117,23 @@ export async function responderChamado(
     });
   }
 
+  // Notas internas não geram e-mail. Nas respostas, o colaborador recebe um
+  // único aviso: o de encerramento já leva a resposta dentro, para não chegarem
+  // dois e-mails ao mesmo tempo.
   if (!interna) {
-    await emailNovaResposta({
+    const trecho = mensagem.length > 220 ? `${mensagem.slice(0, 220)}...` : mensagem;
+    const dadosBase = {
       para: chamado.solicitante_email,
       nome: chamado.solicitante_nome,
       protocolo: chamado.protocolo,
       autor: agente.nome,
-      trecho: mensagem.length > 220 ? `${mensagem.slice(0, 220)}...` : mensagem,
-    });
+      trecho,
+    };
+
     if (statusFinal === "resolvido") {
-      await emailChamadoResolvido({
-        para: chamado.solicitante_email,
-        nome: chamado.solicitante_nome,
-        protocolo: chamado.protocolo,
-      });
+      await emailChamadoResolvido(dadosBase);
+    } else {
+      await emailNovaResposta(dadosBase);
     }
   }
 
