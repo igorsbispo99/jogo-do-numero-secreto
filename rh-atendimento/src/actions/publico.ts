@@ -119,9 +119,10 @@ async function assinarAnexos(anexos: Anexo[]): Promise<AnexoComLink[]> {
 
   return Promise.all(
     anexos.map(async (anexo) => {
+      if (anexo.removido_em) return { ...anexo, url: null };
       const { data } = await supabase.storage
         .from("anexos")
-        .createSignedUrl(anexo.caminho, 60 * 30); // 30 minutos
+        .createSignedUrl(anexo.caminho, 60 * 30, { download: anexo.nome_arquivo });
       return { ...anexo, url: data?.signedUrl ?? null };
     }),
   );

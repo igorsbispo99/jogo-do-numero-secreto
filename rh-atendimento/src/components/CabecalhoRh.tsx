@@ -18,6 +18,15 @@ export function CabecalhoRh({ agente }: { agente: AgenteRh }) {
             </span>
           </Link>
 
+          <nav className="ml-auto flex items-center gap-4 text-sm font-semibold">
+            <Link href="/rh" className="text-slate-600 hover:text-tea-turquesa-700">
+              Fila
+            </Link>
+            <Link href="/rh/indicadores" className="text-slate-600 hover:text-tea-turquesa-700">
+              Indicadores
+            </Link>
+          </nav>
+
           <div className="flex items-center gap-3">
             <span
               title={agente.email}

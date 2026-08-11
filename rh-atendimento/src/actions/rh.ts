@@ -237,6 +237,44 @@ export async function atualizarChamado(
   return { estado: "ok" };
 }
 
+/**
+ * Apaga o arquivo do armazenamento assim que ele não for mais necessário.
+ *
+ * O registro do anexo continua no chamado, marcado com quem apagou e quando -
+ * o histórico não pode ficar com buracos. Sem volta: o arquivo em si some.
+ */
+export async function removerAnexo(formData: FormData): Promise<void> {
+  const agente = await exigirAgente();
+  const anexoId = String(formData.get("anexoId") ?? "");
+  if (!anexoId) return;
+
+  const supabase = supabaseAdmin();
+  const { data: anexo } = await supabase
+    .from("chamado_anexos")
+    .select("id, caminho, nome_arquivo, chamado_id, removido_em")
+    .eq("id", anexoId)
+    .maybeSingle();
+
+  if (!anexo || anexo.removido_em) return;
+
+  const { error } = await supabase.storage.from("anexos").remove([anexo.caminho]);
+  if (error) console.error("[anexo] falha ao apagar:", error.message);
+
+  await supabase
+    .from("chamado_anexos")
+    .update({ removido_em: new Date().toISOString(), removido_por: agente.nome })
+    .eq("id", anexo.id);
+
+  await supabase.from("chamado_eventos").insert({
+    chamado_id: anexo.chamado_id,
+    autor_nome: agente.nome,
+    descricao: `Anexo "${anexo.nome_arquivo}" apagado do armazenamento`,
+    publico: false,
+  });
+
+  revalidatePath(`/rh/chamados/${anexo.chamado_id}`);
+}
+
 /** Assume o chamado para si com um clique. */
 export async function assumirChamado(formData: FormData): Promise<void> {
   const agente = await exigirAgente();

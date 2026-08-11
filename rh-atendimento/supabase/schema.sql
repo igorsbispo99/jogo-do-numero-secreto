@@ -182,6 +182,16 @@ create table if not exists public.chamado_anexos (
 
 create index if not exists anexos_chamado_idx on public.chamado_anexos (chamado_id);
 
+-- Retenção: o arquivo some do armazenamento depois de 30 dias (ou quando o RH
+-- apaga manualmente), mas o registro de que existiu permanece no chamado.
+alter table public.chamado_anexos
+  add column if not exists removido_em timestamptz,
+  add column if not exists removido_por text;
+
+create index if not exists anexos_retencao_idx
+  on public.chamado_anexos (criado_em)
+  where removido_em is null;
+
 -- ---------------------------------------------------------------------
 -- Histórico de alterações (auditoria)
 -- ---------------------------------------------------------------------

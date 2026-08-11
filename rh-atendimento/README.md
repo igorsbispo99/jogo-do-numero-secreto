@@ -127,8 +127,10 @@ npm run dev                  # http://localhost:3000
 | `/abrir` | Colaborador | Abertura do chamado em 4 passos |
 | `/consulta` | Colaborador | Acompanhar e responder (protocolo + CPF) |
 | `/rh/login` | RH | Entrada no painel |
-| `/rh` | RH | Fila com filtros, busca e indicadores |
+| `/rh` | RH | Fila com filtros e busca |
+| `/rh/indicadores` | RH | Painel de indicadores do atendimento |
 | `/rh/chamados/[id]` | RH | Atendimento do chamado |
+| `/diagnostico` | Implantação | Confere chaves, banco e armazenamento |
 
 ---
 
@@ -145,6 +147,46 @@ Os arquivos **não passam pelo servidor do site**: a Vercel recusa requisições
 
 O bucket também tem limite próprio de 8 MB por arquivo e lista de formatos aceitos, para
 valer mesmo que alguém contorne a tela.
+
+### Retenção: anexos somem em 30 dias
+
+Documento pessoal não deve ficar guardado além do necessário — é princípio da LGPD e é o
+que mantém o armazenamento dentro do plano gratuito. Por isso:
+
+- uma rotina diária (`/api/limpeza-anexos`, agendada em `vercel.json` às 3h da manhã)
+  apaga os arquivos com mais de 30 dias e os uploads abandonados;
+- na tela de atendimento, cada anexo tem **Baixar** e **Apagar arquivo** — o RH baixa,
+  guarda onde precisa e apaga na hora;
+- o **registro** do anexo continua no chamado, com quem apagou e quando. Some o arquivo,
+  não o histórico.
+
+Para a rotina rodar, cadastre na Vercel a variável **`CRON_SECRET`** com qualquer texto
+longo e aleatório. Sem ela, a rota só aceita chamadas da própria Vercel.
+
+Para testar a limpeza na hora, sem esperar a madrugada:
+
+```bash
+curl -H "Authorization: Bearer SEU_CRON_SECRET" https://seu-endereco/api/limpeza-anexos
+```
+
+### Quanto o sistema aguenta
+
+| Recurso | Cota gratuita | Consumo por chamado | Capacidade |
+|---|---|---|---|
+| Banco (chamados, mensagens, histórico) | 500 MB | ~4 KB | **~100 mil chamados** |
+| Arquivos (anexos) | 1 GB | ~1,5 MB quando tem anexo | **~650 chamados com anexo por vez** |
+
+O banco não é o gargalo: com 1.000 pessoas abrindo uma média de um chamado por mês, os
+500 MB dariam para mais de oito anos de histórico completo.
+
+O limite real está nos **anexos**, e é por isso que a retenção de 30 dias importa: o
+armazenamento não acumula para sempre, ele se estabiliza no volume de um mês. Cabem cerca
+de 650 chamados com anexo dentro de cada janela de 30 dias — bem acima da expectativa de
+atestados de um grupo desse tamanho. A aba **Indicadores** mostra o quanto está em uso.
+
+Acessos simultâneos não são preocupação: o site é servido sem estado e o banco responde
+por HTTP, então dezenas de pessoas preenchendo o formulário ao mesmo tempo não competem
+entre si.
 
 ## 4. Segurança e LGPD
 
