@@ -160,6 +160,33 @@ const CATEGORIA_ANCLINIC: Categoria = {
         },
       ],
     },
+    {
+      slug: "problema-acesso-anclinic",
+      titulo: "Problema de acesso ao AnClinic",
+      descricao: "Senha, bloqueio ou erro ao entrar no sistema",
+      campos: [
+        {
+          nome: "tipo_problema",
+          label: "O que está acontecendo",
+          tipo: "select",
+          obrigatorio: true,
+          opcoes: [
+            "Esqueci a senha",
+            "Acesso bloqueado",
+            "Usuário não encontrado",
+            "Erro ao entrar no sistema",
+            "Outro problema",
+          ],
+        },
+        {
+          nome: "usuario_acesso",
+          label: "E-mail ou usuário que você usa para entrar",
+          tipo: "texto",
+          obrigatorio: true,
+        },
+      ],
+      anexoAjuda: "Se puder, anexe uma foto da tela com a mensagem de erro.",
+    },
   ],
 };
 
@@ -657,7 +684,7 @@ const CATEGORIAS_ESTAGIO: Categoria[] = [
 
 export const CATALOGO: Record<VinculoSlug, Categoria[]> = {
   pj: [...CATEGORIAS_PJ, CATEGORIA_ANCLINIC, CATEGORIA_OUTROS],
-  clt: [...CATEGORIAS_CLT, CATEGORIA_OUTROS],
+  clt: [...CATEGORIAS_CLT, CATEGORIA_ANCLINIC, CATEGORIA_OUTROS],
   estagio: [...CATEGORIAS_ESTAGIO, CATEGORIA_ANCLINIC, CATEGORIA_OUTROS],
 };
 

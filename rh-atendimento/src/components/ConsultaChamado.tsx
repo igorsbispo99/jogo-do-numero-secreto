@@ -10,6 +10,7 @@ import {
 } from "@/actions/publico";
 import { CampoAnexos } from "@/components/CampoAnexos";
 import { EtiquetaStatus, EtiquetaVinculo } from "@/components/Etiquetas";
+import { DIAS_RETENCAO_ANEXOS } from "@/lib/dominio";
 import { formatarBytes, formatarDataHora, mascararCpf, tempoRelativo } from "@/lib/format";
 
 const INICIAL: EstadoConsulta = { estado: "inicial" };
@@ -188,6 +189,9 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
       {anexos.length > 0 && (
         <div className="cartao p-5">
           <h3 className="text-sm font-bold text-slate-900">Anexos</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Os arquivos ficam guardados por {DIAS_RETENCAO_ANEXOS} dias e depois são apagados.
+          </p>
           <ul className="mt-3 space-y-2">
             {anexos.map((anexo) => (
               <li key={anexo.id} className="text-sm">
@@ -201,7 +205,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
                     {anexo.nome_arquivo}
                   </a>
                 ) : (
-                  <span className="text-slate-600">{anexo.nome_arquivo}</span>
+                  <span className="text-slate-400 line-through">{anexo.nome_arquivo}</span>
                 )}
                 <span className="ml-2 text-xs text-slate-400">
                   {formatarBytes(anexo.tamanho_bytes)}

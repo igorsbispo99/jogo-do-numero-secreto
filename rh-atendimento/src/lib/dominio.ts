@@ -63,3 +63,11 @@ export const TIPOS_ANEXO_ACEITOS = [
 
 export const TAMANHO_MAX_ANEXO = 8 * 1024 * 1024; // 8 MB por arquivo
 export const MAX_ANEXOS = 5;
+
+/**
+ * Por quantos dias os arquivos ficam guardados. Passado esse prazo, a rotina
+ * diária os apaga do armazenamento - o registro de que existiram continua no
+ * chamado. Guardar documento pessoal só pelo tempo necessário é princípio da
+ * LGPD, e também é o que mantém o armazenamento dentro do plano gratuito.
+ */
+export const DIAS_RETENCAO_ANEXOS = 30;

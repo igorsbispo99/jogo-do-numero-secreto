@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { assumirChamado } from "@/actions/rh";
+import { assumirChamado, removerAnexo } from "@/actions/rh";
 import { CabecalhoRh } from "@/components/CabecalhoRh";
 import { ControlesChamado } from "@/components/ControlesChamado";
 import { EtiquetaPrioridade, EtiquetaStatus, EtiquetaVinculo } from "@/components/Etiquetas";
 import { RespostaRh } from "@/components/RespostaRh";
-import { formatarBytes, formatarDataHora, mascararCpf } from "@/lib/format";
+import { DIAS_RETENCAO_ANEXOS } from "@/lib/dominio";
+import { formatarBytes, formatarData, formatarDataHora, mascararCpf } from "@/lib/format";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { agenteAtual, supabaseServidor } from "@/lib/supabase/server";
 import type { Anexo, Chamado, Evento, Mensagem } from "@/lib/tipos";
@@ -48,7 +49,10 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
   const admin = supabaseAdmin();
   const anexosComLink = await Promise.all(
     ((anexos ?? []) as Anexo[]).map(async (anexo) => {
-      const { data } = await admin.storage.from("anexos").createSignedUrl(anexo.caminho, 60 * 30);
+      if (anexo.removido_em) return { ...anexo, url: null };
+      const { data } = await admin.storage
+        .from("anexos")
+        .createSignedUrl(anexo.caminho, 60 * 30, { download: anexo.nome_arquivo });
       return { ...anexo, url: data?.signedUrl ?? null };
     }),
   );
@@ -141,14 +145,18 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                       <ul className="mt-3 space-y-1">
                         {anexosDaMensagem.map((anexo) => (
                           <li key={anexo.id} className="text-sm">
-                            <a
-                              href={anexo.url ?? "#"}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="font-medium text-tea-turquesa-700 hover:underline"
-                            >
-                              📎 {anexo.nome_arquivo}
-                            </a>
+                            {anexo.url ? (
+                              <a
+                                href={anexo.url}
+                                className="font-medium text-tea-turquesa-700 hover:underline"
+                              >
+                                📎 {anexo.nome_arquivo}
+                              </a>
+                            ) : (
+                              <span className="text-slate-400 line-through">
+                                📎 {anexo.nome_arquivo}
+                              </span>
+                            )}
                             <span className="ml-2 text-xs text-slate-400">
                               {formatarBytes(anexo.tamanho_bytes)}
                             </span>
@@ -198,23 +206,48 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                 <h2 className="text-sm font-bold text-slate-900">
                   Anexos ({anexosComLink.length})
                 </h2>
-                <ul className="mt-3 space-y-2">
+                <ul className="mt-3 space-y-3">
                   {anexosComLink.map((anexo) => (
                     <li key={anexo.id} className="text-sm">
-                      <a
-                        href={anexo.url ?? "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-medium text-tea-turquesa-700 hover:underline"
-                      >
+                      <p className="break-words font-medium text-slate-800">
                         {anexo.nome_arquivo}
-                      </a>
-                      <span className="ml-2 text-xs text-slate-400">
-                        {formatarBytes(anexo.tamanho_bytes)}
-                      </span>
+                        <span className="ml-2 text-xs font-normal text-slate-400">
+                          {formatarBytes(anexo.tamanho_bytes)}
+                        </span>
+                      </p>
+
+                      {anexo.removido_em ? (
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          Arquivo apagado em {formatarData(anexo.removido_em)}
+                          {anexo.removido_por ? ' por ' + anexo.removido_por : ''}
+                        </p>
+                      ) : (
+                        <div className="mt-1 flex items-center gap-3">
+                          <a
+                            href={anexo.url ?? "#"}
+                            className="text-xs font-semibold text-tea-turquesa-700 hover:underline"
+                          >
+                            Baixar
+                          </a>
+                          <form action={removerAnexo}>
+                            <input type="hidden" name="anexoId" value={anexo.id} />
+                            <button
+                              type="submit"
+                              className="text-xs font-semibold text-slate-500 hover:text-tea-vinho-600"
+                            >
+                              Apagar arquivo
+                            </button>
+                          </form>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
+
+                <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500">
+                  Baixe o arquivo e apague em seguida quando não precisar mais dele. Todos os
+                  anexos são apagados automaticamente após {DIAS_RETENCAO_ANEXOS} dias.
+                </p>
               </div>
             )}
 

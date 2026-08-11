@@ -44,6 +44,9 @@ export type Anexo = {
   tipo_mime: string | null;
   tamanho_bytes: number | null;
   criado_em: string;
+  /** Preenchido quando o arquivo sai do armazenamento (retenção ou RH). */
+  removido_em: string | null;
+  removido_por: string | null;
 };
 
 export type Evento = {
