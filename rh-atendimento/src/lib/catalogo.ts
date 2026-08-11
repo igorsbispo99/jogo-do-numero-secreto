@@ -440,11 +440,142 @@ const CATEGORIAS_CLT: Categoria[] = [
   },
 ];
 
+/**
+ * O estágio tem trilha própria: bolsa auxílio no lugar de salário, descanso
+ * remunerado no lugar de férias e termo de compromisso no lugar de contrato CLT.
+ */
+const CATEGORIAS_ESTAGIO: Categoria[] = [
+  {
+    slug: "beneficios",
+    titulo: "Benefícios",
+    descricao: "Vale transporte, alimentação e chave Pix dos benefícios",
+    subcategorias: [
+      {
+        slug: "alterar-chave-pix",
+        titulo: "Mudança de chave Pix",
+        campos: CHAVE_PIX_CAMPOS,
+      },
+      {
+        slug: "vale-transporte-alimentacao",
+        titulo: "Vale transporte / alimentação",
+      },
+      {
+        slug: "duvidas-beneficios",
+        titulo: "Dúvidas sobre benefícios",
+      },
+    ],
+  },
+  {
+    slug: "bolsa-auxilio",
+    titulo: "Bolsa Auxílio",
+    descricao: "Valores, datas e comprovantes da bolsa",
+    subcategorias: [
+      {
+        slug: "bolsa-nao-recebida",
+        titulo: "Bolsa não recebida",
+        campos: [
+          { nome: "competencia", label: "Competência (mês/ano)", tipo: "texto", obrigatorio: true },
+        ],
+      },
+      {
+        slug: "divergencia-valor",
+        titulo: "Divergência de valor",
+        campos: [
+          { nome: "competencia", label: "Competência (mês/ano)", tipo: "texto", obrigatorio: true },
+          { nome: "valor_recebido", label: "Valor recebido (R$)", tipo: "numero" },
+          { nome: "valor_esperado", label: "Valor esperado (R$)", tipo: "numero" },
+        ],
+      },
+      {
+        slug: "comprovante-bolsa",
+        titulo: "Comprovante ou recibo da bolsa",
+        campos: [
+          { nome: "competencia", label: "Competência (mês/ano)", tipo: "texto", obrigatorio: true },
+        ],
+      },
+      {
+        slug: "duvidas-bolsa",
+        titulo: "Dúvidas sobre a bolsa auxílio",
+      },
+    ],
+  },
+  {
+    slug: "descanso-remunerado",
+    titulo: "Descanso Remunerado",
+    descricao: "Solicitação, cancelamento e dúvidas sobre o recesso",
+    subcategorias: [
+      {
+        slug: "solicitar-descanso",
+        titulo: "Solicitar descanso remunerado",
+        campos: [
+          { nome: "inicio", label: "Data de início", tipo: "data", obrigatorio: true },
+          { nome: "dias", label: "Quantidade de dias", tipo: "numero", obrigatorio: true },
+          {
+            nome: "gestor",
+            label: "Gestor que aprovou",
+            tipo: "texto",
+            obrigatorio: true,
+            ajuda: "O descanso só é programado após o aceite do gestor.",
+          },
+        ],
+      },
+      {
+        slug: "cancelar-descanso",
+        titulo: "Cancelar ou reprogramar",
+        campos: [
+          { nome: "periodo", label: "Período já programado", tipo: "texto", obrigatorio: true },
+          { nome: "motivo", label: "Motivo", tipo: "textarea", obrigatorio: true },
+          { nome: "gestor", label: "Gestor que aprovou", tipo: "texto", obrigatorio: true },
+        ],
+      },
+      {
+        slug: "duvidas-descanso",
+        titulo: "Dúvidas sobre descanso remunerado",
+      },
+    ],
+  },
+  {
+    slug: "contrato",
+    titulo: "Contrato",
+    descricao: "Termo de compromisso, renovação e encerramento do estágio",
+    subcategorias: [
+      {
+        slug: "assinatura-termo",
+        titulo: "Assinatura do termo de compromisso",
+        descricao: "Termo ainda não recebido ou com pendência na assinatura",
+      },
+      {
+        slug: "renovacao-aditivo",
+        titulo: "Renovação ou aditivo",
+        campos: [
+          { nome: "vigencia", label: "A partir de qual data", tipo: "data" },
+          { nome: "motivo", label: "Observações", tipo: "texto" },
+        ],
+      },
+      {
+        slug: "segunda-via",
+        titulo: "Segunda via do termo",
+      },
+      {
+        slug: "encerramento-estagio",
+        titulo: "Encerramento do estágio",
+        campos: [
+          { nome: "ultimo_dia", label: "Último dia de estágio", tipo: "data", obrigatorio: true },
+          { nome: "motivo", label: "Motivo", tipo: "textarea" },
+        ],
+      },
+      {
+        slug: "duvidas-contrato",
+        titulo: "Dúvidas sobre o contrato",
+      },
+    ],
+  },
+];
+
 export const CATALOGO: Record<VinculoSlug, Categoria[]> = {
   pj: [...CATEGORIAS_PJ, CATEGORIA_OUTROS],
   clt: [...CATEGORIAS_CLT, CATEGORIA_OUTROS],
-  // Estágio segue o mesmo fluxo do CLT, como no desenho do processo.
-  estagio: [...CATEGORIAS_CLT, CATEGORIA_OUTROS],
+  estagio: [...CATEGORIAS_ESTAGIO, CATEGORIA_OUTROS],
 };
 
 export function categoriasDo(vinculo: VinculoSlug): Categoria[] {

@@ -36,7 +36,7 @@ const PASSOS = [
   {
     titulo: "3. Converse com o RH",
     texto:
-      "As respostas ficam registradas no seu protocolo. Nada se perde em conversa de WhatsApp.",
+      "As respostas ficam registradas no seu protocolo e você recebe as atualizações por e-mail.",
     barra: "bg-tea-ambar-500",
     numero: "text-tea-ambar-700",
   },
@@ -51,10 +51,10 @@ export default function PaginaInicial() {
         <section className="text-center">
           <LogoTea className="mx-auto mb-6 h-36 w-auto" />
           <p className="text-sm font-semibold uppercase tracking-widest text-tea-turquesa-700">
-            Canal de atendimento do RH
+            Central de Atendimento do RH
           </p>
           <h1 className="mt-3 text-3xl font-bold text-tea-marinho sm:text-4xl">
-            Bem-vindo ao nosso canal de atendimento de RH 💙
+            Bem-vindo à nossa Central de Atendimento de RH 💙
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-slate-600">
             Criamos este espaço para tornar o seu dia a dia mais simples e garantir que você tenha um
@@ -129,16 +129,7 @@ export default function PaginaInicial() {
           </div>
         </section>
 
-        <section className="mt-14 rounded-xl border border-tea-laranja-200 bg-tea-laranja-50 p-6">
-          <h2 className="text-base font-bold text-tea-laranja-800">Urgência médica ou risco?</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">
-            Este canal é para assuntos administrativos de RH. Situações de emergência, acidente de
-            trabalho ou risco à segurança devem ser comunicadas imediatamente ao seu gestor e à
-            equipe de RH pelos canais internos, além do registro aqui.
-          </p>
-        </section>
-
-        <section className="mt-12 text-center">
+        <section className="mt-14 text-center">
           <p className="text-lg font-bold text-tea-marinho">
             Um único canal, mais organização e um RH mais próximo de você. 🤝
           </p>
