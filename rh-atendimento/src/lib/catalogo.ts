@@ -15,12 +15,22 @@ export type CampoExtra = {
   obrigatorio?: boolean;
   opcoes?: string[];
   ajuda?: string;
+  /**
+   * Mostra o campo só quando outro campo tiver determinado valor.
+   * Ex.: o e-mail corporativo só é pedido a quem respondeu que tem um.
+   */
+  mostrarSe?: { campo: string; valor: string };
 };
 
 export type Subcategoria = {
   slug: string;
   titulo: string;
   descricao?: string;
+  /**
+   * Assuntos que já perguntam tudo em campos próprios não precisam obrigar um
+   * texto livre - seria só atrito para quem preenche.
+   */
+  descricaoDispensavel?: boolean;
   campos?: CampoExtra[];
   anexoObrigatorio?: boolean;
   anexoAjuda?: string;
@@ -79,6 +89,79 @@ const CHAVE_PIX_CAMPOS: CampoExtra[] = [
     ajuda: "A conta precisa estar no seu nome (ou no CNPJ da sua empresa, se PJ).",
   },
 ];
+
+/**
+ * Acesso ao AnClinic - substitui o formulário externo que o RH usava.
+ *
+ * Nome, CPF, celular e modelo de contratação não são repetidos aqui: já vêm
+ * dos passos anteriores da solicitação e entram no chamado do mesmo jeito.
+ */
+const CATEGORIA_ANCLINIC: Categoria = {
+  slug: "acesso-anclinic",
+  titulo: "Acesso ao AnClinic",
+  descricao: "Liberação de acesso ao sistema AnClinic",
+  subcategorias: [
+    {
+      slug: "solicitar-acesso-anclinic",
+      titulo: "Solicitar acesso ao AnClinic",
+      descricao: "Cadastro de novo usuário no sistema",
+      descricaoDispensavel: true,
+      campos: [
+        {
+          nome: "data_nascimento",
+          label: "Data de nascimento",
+          tipo: "data",
+          obrigatorio: true,
+        },
+        {
+          nome: "possui_email_corporativo",
+          label: "Você possui e-mail corporativo?",
+          tipo: "select",
+          obrigatorio: true,
+          opcoes: ["Sim", "Não"],
+        },
+        {
+          nome: "email_corporativo",
+          label: "Qual é o seu e-mail corporativo?",
+          tipo: "texto",
+          obrigatorio: true,
+          mostrarSe: { campo: "possui_email_corporativo", valor: "Sim" },
+        },
+        {
+          nome: "email_pessoal",
+          label: "Informe seu e-mail pessoal",
+          tipo: "texto",
+          obrigatorio: true,
+          mostrarSe: { campo: "possui_email_corporativo", valor: "Não" },
+        },
+        {
+          nome: "inicio_contrato",
+          label: "Data de início do contrato",
+          tipo: "data",
+        },
+        {
+          nome: "clinica",
+          label: "Você está vinculada(o) a qual clínica?",
+          tipo: "select",
+          obrigatorio: true,
+          opcoes: ["Instituto TEA", "Fisiomed ABA", "Unidade corporativa"],
+        },
+        {
+          nome: "conselho_registro",
+          label: "Conselho profissional e número de registro",
+          tipo: "texto",
+          obrigatorio: true,
+          ajuda: "Exemplo: CRP 06/123456.",
+        },
+        {
+          nome: "supervisora",
+          label: "Nome da(o) supervisor(a) responsável",
+          tipo: "texto",
+        },
+      ],
+    },
+  ],
+};
 
 /**
  * Porta de entrada para o que não se encaixa nas outras categorias.
@@ -573,9 +656,9 @@ const CATEGORIAS_ESTAGIO: Categoria[] = [
 ];
 
 export const CATALOGO: Record<VinculoSlug, Categoria[]> = {
-  pj: [...CATEGORIAS_PJ, CATEGORIA_OUTROS],
+  pj: [...CATEGORIAS_PJ, CATEGORIA_ANCLINIC, CATEGORIA_OUTROS],
   clt: [...CATEGORIAS_CLT, CATEGORIA_OUTROS],
-  estagio: [...CATEGORIAS_ESTAGIO, CATEGORIA_OUTROS],
+  estagio: [...CATEGORIAS_ESTAGIO, CATEGORIA_ANCLINIC, CATEGORIA_OUTROS],
 };
 
 export function categoriasDo(vinculo: VinculoSlug): Categoria[] {

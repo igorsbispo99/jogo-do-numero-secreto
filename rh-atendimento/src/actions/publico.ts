@@ -192,6 +192,18 @@ async function registrarSolicitacao(
   if (erroAnexo) return { estado: "erro", mensagem: erroAnexo };
 
   const assunto = rotuloAssunto(vinculo, dados.categoria, dados.subcategoria);
+
+  let descricao = dados.descricao;
+  if (descricao.length < 15) {
+    if (!sub.descricaoDispensavel) {
+      return {
+        estado: "erro",
+        mensagem: "Descreva sua solicitação com pelo menos 15 caracteres.",
+      };
+    }
+    if (!descricao) descricao = `Solicitação registrada pelo formulário: ${assunto}.`;
+  }
+
   const supabase = supabaseAdmin();
 
   const { data: chamado, error } = await supabase
@@ -206,7 +218,7 @@ async function registrarSolicitacao(
       categoria: dados.categoria,
       subcategoria: dados.subcategoria,
       assunto,
-      descricao: dados.descricao,
+      descricao,
       dados_extras: extras.dados,
     })
     .select("id, protocolo")
@@ -226,7 +238,7 @@ async function registrarSolicitacao(
       chamado_id: chamado.id,
       autor_tipo: "colaborador",
       autor_nome: dados.nome,
-      corpo: dados.descricao,
+      corpo: descricao,
     })
     .select("id")
     .single();
