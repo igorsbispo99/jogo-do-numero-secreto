@@ -269,6 +269,15 @@ insert into storage.buckets (id, name, public)
 values ('anexos', 'anexos', false)
 on conflict (id) do nothing;
 
+-- Limites aplicados pelo próprio Supabase, independentemente do que o site
+-- validar: no máximo 8 MB por arquivo e só formatos de documento e imagem.
+update storage.buckets
+   set file_size_limit = 8388608,
+       allowed_mime_types = array[
+         'application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic'
+       ]
+ where id = 'anexos';
+
 drop policy if exists "rh le anexos storage" on storage.objects;
 create policy "rh le anexos storage" on storage.objects
   for select to authenticated

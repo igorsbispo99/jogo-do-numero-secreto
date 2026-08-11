@@ -132,6 +132,20 @@ npm run dev                  # http://localhost:3000
 
 ---
 
+### Como os anexos trafegam
+
+Os arquivos **não passam pelo servidor do site**: a Vercel recusa requisições acima de
+~4,5 MB, e uma foto de atestado tirada no celular passa disso facilmente. O fluxo é:
+
+1. o navegador pede autorização ao servidor (`src/actions/upload.ts`);
+2. o servidor confere tipo e tamanho e devolve um endereço temporário de gravação;
+3. o navegador envia o arquivo direto para o Supabase;
+4. ao registrar a solicitação, o servidor move o arquivo do rascunho para a pasta do
+   chamado e guarda a referência.
+
+O bucket também tem limite próprio de 8 MB por arquivo e lista de formatos aceitos, para
+valer mesmo que alguém contorne a tela.
+
 ## 4. Segurança e LGPD
 
 O sistema lida com CPF e atestados médicos, que são dados sensíveis. O que já está feito:

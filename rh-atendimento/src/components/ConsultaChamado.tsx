@@ -8,9 +8,9 @@ import {
   type ChamadoPublico,
   type EstadoConsulta,
 } from "@/actions/publico";
+import { CampoAnexos } from "@/components/CampoAnexos";
 import { EtiquetaStatus, EtiquetaVinculo } from "@/components/Etiquetas";
 import { formatarBytes, formatarDataHora, mascararCpf, tempoRelativo } from "@/lib/format";
-import { MAX_ANEXOS } from "@/lib/dominio";
 
 const INICIAL: EstadoConsulta = { estado: "inicial" };
 
@@ -238,15 +238,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
             <label className="rotulo" htmlFor="anexos-resposta">
               Anexar arquivos (opcional)
             </label>
-            <input
-              id="anexos-resposta"
-              name="anexos"
-              type="file"
-              multiple
-              accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-              className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-tea-turquesa-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-tea-turquesa-800"
-            />
-            <p className="mt-1 text-xs text-slate-500">Até {MAX_ANEXOS} arquivos, 8 MB cada.</p>
+            <CampoAnexos id="anexos-resposta" />
           </div>
 
           {estadoResposta.estado === "erro" && (

@@ -1,10 +1,8 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { acharSubcategoria, rotuloAssunto, tituloVinculo, type VinculoSlug } from "@/lib/catalogo";
 import { MAX_ANEXOS, TAMANHO_MAX_ANEXO, TIPOS_ANEXO_ACEITOS } from "@/lib/dominio";
 import { emailAvisoRh, emailChamadoAberto } from "@/lib/email";
-import { nomeArquivoSeguro } from "@/lib/format";
 import { limparTentativasAntigas, registrarTentativa } from "@/lib/limite";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { Anexo, AnexoComLink, Chamado, Mensagem } from "@/lib/tipos";
@@ -51,44 +49,66 @@ export type EstadoConsulta =
 // Anexos
 // ---------------------------------------------------------------------------
 
-function validarArquivos(arquivos: File[]): string | null {
-  if (arquivos.length > MAX_ANEXOS) return `Envie no máximo ${MAX_ANEXOS} arquivos.`;
-  for (const arquivo of arquivos) {
-    if (arquivo.size > TAMANHO_MAX_ANEXO) {
-      return `O arquivo "${arquivo.name}" passa de 8 MB. Reduza a qualidade da foto e tente de novo.`;
+const PASTA_RASCUNHO = "rascunho/";
+
+type AnexoEnviado = { caminho: string; nome: string; tipo: string; tamanho: number };
+
+/**
+ * O navegador já subiu os arquivos direto para o Supabase (veja
+ * actions/upload.ts). O formulário traz apenas os endereços deles.
+ */
+function lerAnexos(formData: FormData): AnexoEnviado[] {
+  const caminhos = formData.getAll("anexo_caminho").map(String).filter(Boolean);
+  const nomes = formData.getAll("anexo_nome").map(String);
+  const tipos = formData.getAll("anexo_tipo").map(String);
+  const tamanhos = formData.getAll("anexo_tamanho").map((v) => Number(v) || 0);
+
+  return caminhos.slice(0, MAX_ANEXOS).map((caminho, i) => ({
+    caminho,
+    nome: (nomes[i] ?? "anexo").slice(0, 200),
+    tipo: tipos[i] ?? "",
+    tamanho: tamanhos[i] ?? 0,
+  }));
+}
+
+function validarAnexos(anexos: AnexoEnviado[]): string | null {
+  if (anexos.length > MAX_ANEXOS) return `Envie no máximo ${MAX_ANEXOS} arquivos.`;
+  for (const anexo of anexos) {
+    // Só aceitamos arquivos recém-enviados, nunca um caminho digitado à mão.
+    if (!anexo.caminho.startsWith(PASTA_RASCUNHO)) {
+      return "Anexo inválido. Selecione o arquivo novamente.";
     }
-    if (arquivo.type && !TIPOS_ANEXO_ACEITOS.includes(arquivo.type)) {
-      return `"${arquivo.name}" não é um formato aceito. Envie PDF, JPG ou PNG.`;
+    if (anexo.tamanho > TAMANHO_MAX_ANEXO) {
+      return `"${anexo.nome}" passa de 8 MB. Reduza a qualidade da foto e tente de novo.`;
+    }
+    if (anexo.tipo && !TIPOS_ANEXO_ACEITOS.includes(anexo.tipo)) {
+      return `"${anexo.nome}" não é um formato aceito. Envie PDF, JPG ou PNG.`;
     }
   }
   return null;
 }
 
-async function salvarAnexos(
+/** Move os arquivos do rascunho para a pasta do chamado e registra cada um. */
+async function registrarAnexos(
   chamadoId: string,
-  arquivos: File[],
+  anexos: AnexoEnviado[],
   mensagemId: string | null,
 ): Promise<void> {
   const supabase = supabaseAdmin();
 
-  for (const arquivo of arquivos) {
-    const caminho = `${chamadoId}/${randomUUID()}-${nomeArquivoSeguro(arquivo.name)}`;
-    const { error } = await supabase.storage
-      .from("anexos")
-      .upload(caminho, arquivo, { contentType: arquivo.type || "application/octet-stream" });
+  for (const anexo of anexos) {
+    const destino = `${chamadoId}/${anexo.caminho.slice(PASTA_RASCUNHO.length)}`;
+    const { error } = await supabase.storage.from("anexos").move(anexo.caminho, destino);
 
-    if (error) {
-      console.error("[anexo] falha no upload:", error.message);
-      continue;
-    }
+    if (error) console.error("[anexo] falha ao mover:", error.message);
 
     await supabase.from("chamado_anexos").insert({
       chamado_id: chamadoId,
       mensagem_id: mensagemId,
-      caminho,
-      nome_arquivo: arquivo.name.slice(0, 200),
-      tipo_mime: arquivo.type || null,
-      tamanho_bytes: arquivo.size,
+      caminho: error ? anexo.caminho : destino,
+      nome_arquivo: anexo.nome,
+      tipo_mime: anexo.tipo || null,
+      tamanho_bytes: anexo.tamanho || null,
     });
   }
 }
@@ -112,6 +132,24 @@ async function assinarAnexos(anexos: Anexo[]): Promise<AnexoComLink[]> {
 // ---------------------------------------------------------------------------
 
 export async function abrirChamado(
+  anterior: EstadoAbertura,
+  formData: FormData,
+): Promise<EstadoAbertura> {
+  // Nenhuma falha inesperada pode virar tela de erro em branco para quem está
+  // tentando registrar uma solicitação.
+  try {
+    return await registrarSolicitacao(anterior, formData);
+  } catch (erro) {
+    console.error("[chamado] exceção ao registrar:", erro);
+    return {
+      estado: "erro",
+      mensagem:
+        "Tivemos uma falha inesperada ao registrar sua solicitação. Tente novamente em instantes.",
+    };
+  }
+}
+
+async function registrarSolicitacao(
   _anterior: EstadoAbertura,
   formData: FormData,
 ): Promise<EstadoAbertura> {
@@ -145,15 +183,13 @@ export async function abrirChamado(
   const extras = validarCamposExtras(vinculo, dados.categoria, dados.subcategoria, formData);
   if (!extras.ok) return { estado: "erro", mensagem: extras.erro };
 
-  const arquivos = formData
-    .getAll("anexos")
-    .filter((a): a is File => a instanceof File && a.size > 0);
+  const anexos = lerAnexos(formData);
 
-  if (sub.anexoObrigatorio && arquivos.length === 0) {
+  if (sub.anexoObrigatorio && anexos.length === 0) {
     return { estado: "erro", mensagem: "Este assunto exige pelo menos um anexo." };
   }
-  const erroArquivo = validarArquivos(arquivos);
-  if (erroArquivo) return { estado: "erro", mensagem: erroArquivo };
+  const erroAnexo = validarAnexos(anexos);
+  if (erroAnexo) return { estado: "erro", mensagem: erroAnexo };
 
   const assunto = rotuloAssunto(vinculo, dados.categoria, dados.subcategoria);
   const supabase = supabaseAdmin();
@@ -195,8 +231,8 @@ export async function abrirChamado(
     .select("id")
     .single();
 
-  if (arquivos.length > 0) {
-    await salvarAnexos(chamado.id, arquivos, mensagem?.id ?? null);
+  if (anexos.length > 0) {
+    await registrarAnexos(chamado.id, anexos, mensagem?.id ?? null);
   }
 
   await supabase.from("chamado_eventos").insert({
@@ -337,11 +373,9 @@ export async function responderComoColaborador(
     return { estado: "erro", mensagem: "Este chamado foi cancelado e não aceita novas mensagens." };
   }
 
-  const arquivos = formData
-    .getAll("anexos")
-    .filter((a): a is File => a instanceof File && a.size > 0);
-  const erroArquivo = validarArquivos(arquivos);
-  if (erroArquivo) return { estado: "erro", mensagem: erroArquivo };
+  const anexos = lerAnexos(formData);
+  const erroAnexo = validarAnexos(anexos);
+  if (erroAnexo) return { estado: "erro", mensagem: erroAnexo };
 
   const { data: novaMensagem } = await supabase
     .from("chamado_mensagens")
@@ -354,8 +388,8 @@ export async function responderComoColaborador(
     .select("id")
     .single();
 
-  if (arquivos.length > 0) {
-    await salvarAnexos(chamado.id, arquivos, novaMensagem?.id ?? null);
+  if (anexos.length > 0) {
+    await registrarAnexos(chamado.id, anexos, novaMensagem?.id ?? null);
   }
 
   // Responder reabre o chamado: nada de assunto encerrado por engano.

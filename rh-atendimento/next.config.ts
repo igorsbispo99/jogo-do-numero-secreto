@@ -3,8 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      // Atestados e comprovantes são enviados junto do chamado.
-      bodySizeLimit: "12mb",
+      // Os anexos vão direto do navegador para o Supabase, então pelo servidor
+      // só trafega texto. Mantido folgado por causa de descrições longas.
+      bodySizeLimit: "2mb",
     },
   },
 };
