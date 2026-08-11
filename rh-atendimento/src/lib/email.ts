@@ -120,11 +120,12 @@ export async function emailChamadoAberto(dados: {
     titulo: "Recebemos sua solicitação",
     linhas: [
       `Olá, ${escapar(dados.nome.split(" ")[0])}!`,
-      `Sua solicitação foi registrada com o protocolo ${negrito(dados.protocolo)}.`,
+      `Sua solicitação foi registrada com o protocolo ${negrito(dados.protocolo)} e já chegou ao time responsável.`,
       `Assunto: ${escapar(dados.assunto)}.`,
-      "Guarde este número: com ele e seu CPF você acompanha o andamento e responde ao RH a qualquer momento.",
+      "Guarde este número: com ele e seu CPF você acompanha cada etapa e responde ao RH a qualquer momento.",
+      "Conte com a gente! 💙",
     ],
-    botao: { texto: "Acompanhar chamado", url: link },
+    botao: { texto: "Acompanhar solicitação", url: link },
   });
 }
 
@@ -154,18 +155,32 @@ export async function emailChamadoResolvido(dados: {
   para: string;
   nome: string;
   protocolo: string;
+  /** Resposta que encerrou o atendimento, quando houver. */
+  autor?: string;
+  trecho?: string;
 }) {
   const link = `${urlBase()}/consulta?protocolo=${encodeURIComponent(dados.protocolo)}`;
+
+  const respostaFinal =
+    dados.trecho && dados.autor
+      ? [
+          `${escapar(dados.autor)} respondeu:`,
+          `<em style="color:#475569">${escapar(dados.trecho)}</em>`,
+        ]
+      : [];
+
   await enviar({
     para: dados.para,
-    assunto: `[${dados.protocolo}] Chamado resolvido`,
-    titulo: "Seu chamado foi resolvido",
+    assunto: `[${dados.protocolo}] Solicitação resolvida`,
+    titulo: "Sua solicitação foi resolvida",
     linhas: [
       `Olá, ${escapar(dados.nome.split(" ")[0])}!`,
-      `O chamado ${negrito(dados.protocolo)} foi marcado como resolvido pelo RH.`,
-      "Se o assunto não foi totalmente resolvido, responda no próprio chamado que ele volta para a fila.",
+      `A solicitação ${negrito(dados.protocolo)} foi resolvida pelo RH.`,
+      ...respostaFinal,
+      "Se o assunto não foi totalmente resolvido, é só responder por lá que ele volta para a fila.",
+      "Conte com a gente! 💙",
     ],
-    botao: { texto: "Ver chamado", url: link },
+    botao: { texto: "Ver solicitação", url: link },
   });
 }
 

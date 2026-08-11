@@ -80,6 +80,51 @@ const CHAVE_PIX_CAMPOS: CampoExtra[] = [
   },
 ];
 
+/**
+ * Porta de entrada para o que não se encaixa nas outras categorias.
+ * O canal promete atender "outros assuntos relacionados ao RH" - ninguém pode
+ * ficar sem caminho por não achar o assunto exato na lista.
+ */
+const CATEGORIA_OUTROS: Categoria = {
+  slug: "outros-assuntos",
+  titulo: "Outros assuntos",
+  descricao: "Não achou seu assunto na lista? Registre por aqui",
+  subcategorias: [
+    {
+      slug: "duvida-geral",
+      titulo: "Dúvida geral sobre RH",
+    },
+    {
+      slug: "declaracao-documento",
+      titulo: "Declaração ou documento",
+      descricao: "Declaração de vínculo, comprovante de renda e afins",
+      campos: [
+        {
+          nome: "documento",
+          label: "Qual documento você precisa",
+          tipo: "texto",
+          obrigatorio: true,
+        },
+        { nome: "finalidade", label: "Para qual finalidade", tipo: "texto" },
+      ],
+    },
+    {
+      slug: "atualizacao-cadastro",
+      titulo: "Atualização de dados cadastrais",
+      descricao: "Endereço, telefone, estado civil, dependentes",
+    },
+    {
+      slug: "sugestao-elogio",
+      titulo: "Sugestão, elogio ou reclamação",
+    },
+    {
+      slug: "outro-assunto",
+      titulo: "Outro assunto",
+      descricao: "Descreva livremente e o RH direciona para a pessoa certa",
+    },
+  ],
+};
+
 const CATEGORIAS_PJ: Categoria[] = [
   {
     slug: "contratos",
@@ -396,10 +441,10 @@ const CATEGORIAS_CLT: Categoria[] = [
 ];
 
 export const CATALOGO: Record<VinculoSlug, Categoria[]> = {
-  pj: CATEGORIAS_PJ,
-  clt: CATEGORIAS_CLT,
+  pj: [...CATEGORIAS_PJ, CATEGORIA_OUTROS],
+  clt: [...CATEGORIAS_CLT, CATEGORIA_OUTROS],
   // Estágio segue o mesmo fluxo do CLT, como no desenho do processo.
-  estagio: CATEGORIAS_CLT,
+  estagio: [...CATEGORIAS_CLT, CATEGORIA_OUTROS],
 };
 
 export function categoriasDo(vinculo: VinculoSlug): Categoria[] {

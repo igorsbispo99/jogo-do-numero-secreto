@@ -94,7 +94,7 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
     );
   }
 
-  const { chamado, mensagens, anexos } = visao.dados;
+  const { chamado, mensagens, anexos, etapas } = visao.dados;
 
   return (
     <div className="space-y-6">
@@ -127,6 +127,40 @@ export function ConsultaChamado({ protocoloInicial = "" }: { protocoloInicial?: 
           </dl>
         )}
       </div>
+
+      {etapas.length > 0 && (
+        <div className="cartao p-6">
+          <h3 className="text-sm font-bold text-tea-marinho">Andamento do seu chamado</h3>
+          <ol className="mt-4 space-y-4">
+            {etapas.map((etapa, indice) => {
+              const ultima = indice === etapas.length - 1;
+              return (
+                <li key={etapa.id} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span
+                      className={`mt-1 h-3 w-3 shrink-0 rounded-full ${
+                        ultima ? "bg-tea-turquesa-500" : "bg-slate-300"
+                      }`}
+                      aria-hidden
+                    />
+                    {!ultima && <span className="mt-1 w-px flex-1 bg-slate-200" aria-hidden />}
+                  </div>
+                  <div className="pb-1">
+                    <p
+                      className={`text-sm font-semibold ${
+                        ultima ? "text-tea-turquesa-800" : "text-slate-700"
+                      }`}
+                    >
+                      {etapa.descricao}
+                    </p>
+                    <p className="text-xs text-slate-500">{formatarDataHora(etapa.criado_em)}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )}
 
       <div className="cartao divide-y divide-slate-100">
         {mensagens.map((mensagem) => (

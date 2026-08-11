@@ -196,6 +196,12 @@ create table if not exists public.chamado_eventos (
 create index if not exists eventos_chamado_idx
   on public.chamado_eventos (chamado_id, criado_em);
 
+-- Etapas marcadas como públicas aparecem para o colaborador no acompanhamento
+-- do protocolo. As de bastidor (prioridade, remanejamento interno) ficam só
+-- para o RH. Rodar este arquivo de novo acrescenta a coluna sem perder dados.
+alter table public.chamado_eventos
+  add column if not exists publico boolean not null default true;
+
 -- ---------------------------------------------------------------------
 -- Controle de tentativas de consulta pública (anti força-bruta de CPF)
 -- ---------------------------------------------------------------------
