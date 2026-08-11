@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { abrirChamado, type EstadoAbertura } from "@/actions/publico";
+import { CampoAnexos } from "@/components/CampoAnexos";
 import { FaixaMarca } from "@/components/Logo";
 import {
   categoriasDo,
@@ -12,7 +13,6 @@ import {
   type VinculoSlug,
   VINCULOS,
 } from "@/lib/catalogo";
-import { MAX_ANEXOS } from "@/lib/dominio";
 import { mascararCpf } from "@/lib/format";
 
 const ESTADO_INICIAL: EstadoAbertura = { estado: "inicial" };
@@ -274,20 +274,11 @@ export function FormularioChamado() {
               <label className="rotulo" htmlFor="anexos">
                 Anexos {subcategoria.anexoObrigatorio ? "*" : "(opcional)"}
               </label>
-              <input
+              <CampoAnexos
                 id="anexos"
-                name="anexos"
-                type="file"
-                multiple
-                required={subcategoria.anexoObrigatorio}
-                accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-tea-turquesa-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-tea-turquesa-800"
+                obrigatorio={subcategoria.anexoObrigatorio}
+                ajuda={subcategoria.anexoAjuda}
               />
-              <p className="mt-1 text-xs text-slate-500">
-                {subcategoria.anexoAjuda ??
-                  "PDF, JPG ou PNG."}{" "}
-                Até {MAX_ANEXOS} arquivos, 8 MB cada.
-              </p>
             </div>
           </section>
 
