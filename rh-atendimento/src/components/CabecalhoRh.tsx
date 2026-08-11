@@ -20,7 +20,7 @@ export function CabecalhoRh({ agente }: { agente: AgenteRh }) {
 
           <nav className="ml-auto flex items-center gap-4 text-sm font-semibold">
             <Link href="/rh" className="text-slate-600 hover:text-tea-turquesa-700">
-              Fila
+              Chamados
             </Link>
             <Link href="/rh/indicadores" className="text-slate-600 hover:text-tea-turquesa-700">
               Indicadores
