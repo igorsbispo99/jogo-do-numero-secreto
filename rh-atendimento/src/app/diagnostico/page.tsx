@@ -22,6 +22,31 @@ export const dynamic = "force-dynamic";
 
 type Item = { titulo: string; ok: boolean; detalhe?: string; opcional?: boolean };
 
+/**
+ * Descobre que tipo de chave foi cadastrada, sem revelar o valor dela.
+ *
+ * As chaves clássicas do Supabase são JWT: o "papel" (anon ou service_role)
+ * vem escrito no miolo do token. Trocar uma pela outra é o engano mais comum
+ * na instalação - e derruba tudo que o servidor precisa fazer, porque a chave
+ * anon respeita as travas de segurança das tabelas (RLS).
+ */
+function papelDaChave(chave: string | undefined): string {
+  if (!chave) return "ausente";
+  if (chave.startsWith("sb_secret_")) return "secret";
+  if (chave.startsWith("sb_publishable_")) return "publishable";
+
+  const partes = chave.split(".");
+  if (partes.length === 3) {
+    try {
+      const miolo = JSON.parse(Buffer.from(partes[1], "base64").toString("utf8"));
+      return String(miolo.role ?? "desconhecido");
+    } catch {
+      return "desconhecido";
+    }
+  }
+  return "desconhecido";
+}
+
 const TABELAS = [
   "chamados",
   "chamado_mensagens",
@@ -63,6 +88,27 @@ async function conferir(): Promise<{ itens: Item[]; conclusao: string }> {
         "Faltam variáveis obrigatórias do Supabase. Cadastre-as na Vercel e faça um Redeploy.",
     };
   }
+
+  const papelServico = papelDaChave(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const chaveDeServicoOk = papelServico === "service_role" || papelServico === "secret";
+  itens.push({
+    titulo: "SUPABASE_SERVICE_ROLE_KEY é mesmo a chave de servidor",
+    ok: chaveDeServicoOk,
+    detalhe: chaveDeServicoOk
+      ? `Tipo detectado: ${papelServico}.`
+      : `Tipo detectado: ${papelServico}. Precisa ser a chave "service_role" (ou "secret", no formato novo). ` +
+        "Pegue em Supabase › Project Settings › API Keys, no campo que vem escondido atrás do botão Reveal.",
+  });
+
+  const papelPublico = papelDaChave(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  itens.push({
+    titulo: "NEXT_PUBLIC_SUPABASE_ANON_KEY é a chave pública",
+    ok: papelPublico === "anon" || papelPublico === "publishable",
+    detalhe:
+      papelPublico === "service_role" || papelPublico === "secret"
+        ? "Perigo: a chave de servidor está publicada no navegador. Troque pela chave anon/publishable."
+        : `Tipo detectado: ${papelPublico}.`,
+  });
 
   const supabase = supabaseAdmin();
   let faltaTabela = false;
@@ -130,11 +176,21 @@ async function conferir(): Promise<{ itens: Item[]; conclusao: string }> {
   });
 
   const obrigatoriosOk = itens.every((i) => i.ok || i.opcional);
+
+  /* O erro 42501 é a trava de segurança das tabelas (RLS) recusando a
+     gravação. Como o servidor deveria passar por cima dela, isso quase sempre
+     significa chave trocada - e não banco mal configurado. */
+  const bloqueadoPorChave = erroGravacao?.includes("42501") || !chaveDeServicoOk;
+
   const conclusao = obrigatoriosOk
     ? "Tudo certo: o sistema consegue registrar solicitações."
-    : faltaTabela || !temBucket
-      ? "O banco ainda não está preparado. Rode o arquivo supabase/schema.sql no SQL Editor do Supabase (pode rodar de novo sem medo, ele não apaga dados)."
-      : "Veja os itens marcados em vermelho acima.";
+    : bloqueadoPorChave
+      ? 'A variável SUPABASE_SERVICE_ROLE_KEY não contém a chave "service_role". Copie a chave certa em Supabase › Project Settings › API Keys (a que fica escondida atrás do botão Reveal), cole na Vercel e faça um Redeploy.'
+      : faltaTabela
+        ? "O banco ainda não está preparado. Rode o arquivo supabase/schema.sql no SQL Editor do Supabase (pode rodar de novo sem medo, ele não apaga dados)."
+        : !temBucket
+          ? "Falta o bucket de anexos. Rode o supabase/schema.sql de novo, que ele cria o bucket."
+          : "Veja os itens marcados em vermelho acima.";
 
   return { itens, conclusao };
 }
