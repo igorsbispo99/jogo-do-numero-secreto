@@ -275,6 +275,43 @@ export async function removerAnexo(formData: FormData): Promise<void> {
   revalidatePath(`/rh/chamados/${anexo.chamado_id}`);
 }
 
+/**
+ * Marca (ou desmarca) o chamado como teste.
+ *
+ * Nada é apagado: o chamado continua acessível e o colaborador segue vendo o
+ * dele normalmente. Ele só deixa de aparecer na fila e de contar nos
+ * indicadores - é o que separa a homologação da operação de verdade.
+ */
+export async function alternarTeste(formData: FormData): Promise<void> {
+  const agente = await exigirAgente();
+  const chamadoId = String(formData.get("chamadoId") ?? "");
+  if (!chamadoId) return;
+
+  const supabase = supabaseAdmin();
+  const { data: chamado } = await supabase
+    .from("chamados")
+    .select("id, de_teste")
+    .eq("id", chamadoId)
+    .maybeSingle();
+
+  if (!chamado) return;
+  const virandoTeste = !chamado.de_teste;
+
+  await supabase.from("chamados").update({ de_teste: virandoTeste }).eq("id", chamado.id);
+
+  await supabase.from("chamado_eventos").insert({
+    chamado_id: chamado.id,
+    autor_nome: agente.nome,
+    descricao: virandoTeste
+      ? "Chamado marcado como teste (fora dos indicadores)"
+      : "Chamado voltou a contar nos indicadores",
+    publico: false,
+  });
+
+  revalidatePath(`/rh/chamados/${chamado.id}`);
+  revalidatePath("/rh");
+}
+
 /** Assume o chamado para si com um clique. */
 export async function assumirChamado(formData: FormData): Promise<void> {
   const agente = await exigirAgente();

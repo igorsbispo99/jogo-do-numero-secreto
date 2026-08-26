@@ -20,6 +20,7 @@ type Filtros = {
   responsavel?: string;
   busca?: string;
   pagina?: string;
+  base?: string;
 };
 
 export default async function PainelRh({
@@ -37,9 +38,13 @@ export default async function PainelRh({
   let consulta = supabase
     .from("chamados")
     .select(
-      "id, protocolo, solicitante_nome, vinculo, assunto, status, prioridade, responsavel_id, criado_em, atualizado_em",
+      "id, protocolo, solicitante_nome, vinculo, assunto, status, prioridade, responsavel_id, criado_em, atualizado_em, de_teste",
       { count: "exact" },
     );
+
+  // Por padrão a fila mostra só a operação real; os testes ficam guardados.
+  if (filtros.base === "testes") consulta = consulta.eq("de_teste", true);
+  else if (filtros.base !== "todos") consulta = consulta.eq("de_teste", false);
 
   if (filtros.status === "abertos" || !filtros.status) {
     consulta = consulta.in("status", STATUS_ABERTOS);
@@ -148,6 +153,17 @@ export default async function PainelRh({
           </div>
 
           <div>
+            <label className="rotulo" htmlFor="base">
+              Base
+            </label>
+            <select id="base" name="base" defaultValue={filtros.base ?? ""} className="campo">
+              <option value="">Chamados reais</option>
+              <option value="testes">Somente testes</option>
+              <option value="todos">Reais + testes</option>
+            </select>
+          </div>
+
+          <div>
             <label className="rotulo" htmlFor="responsavel">
               Responsável
             </label>
@@ -195,6 +211,11 @@ export default async function PainelRh({
                         </span>
                         <EtiquetaVinculo vinculo={chamado.vinculo} />
                         <EtiquetaPrioridade prioridade={chamado.prioridade} />
+                        {chamado.de_teste && (
+                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600">
+                            Teste
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 truncate font-semibold text-slate-900">{chamado.assunto}</p>
                       <p className="mt-0.5 truncate text-sm text-slate-500">
@@ -250,7 +271,8 @@ export default async function PainelRh({
 
 async function carregarIndicadores(agenteId: string) {
   const supabase = await supabaseServidor();
-  const contagem = () => supabase.from("chamados").select("id", { count: "exact", head: true });
+  const contagem = () =>
+    supabase.from("chamados").select("id", { count: "exact", head: true }).eq("de_teste", false);
 
   const [abertos, emAndamento, aguardando, meus] = await Promise.all([
     contagem().eq("status", "aberto"),

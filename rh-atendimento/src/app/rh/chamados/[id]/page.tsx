@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { assumirChamado, removerAnexo } from "@/actions/rh";
+import { alternarTeste, assumirChamado, removerAnexo } from "@/actions/rh";
 import { CabecalhoRh } from "@/components/CabecalhoRh";
 import { ControlesChamado } from "@/components/ControlesChamado";
 import { EtiquetaPrioridade, EtiquetaStatus, EtiquetaVinculo } from "@/components/Etiquetas";
@@ -76,6 +76,11 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                 <EtiquetaVinculo vinculo={dados.vinculo} />
                 <EtiquetaStatus status={dados.status} />
                 <EtiquetaPrioridade prioridade={dados.prioridade} />
+                {dados.de_teste && (
+                  <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600">
+                    Teste · fora dos indicadores
+                  </span>
+                )}
               </div>
               <h1 className="mt-2 text-xl font-bold text-tea-marinho">{dados.assunto}</h1>
               <p className="mt-1 text-sm text-slate-500">
@@ -85,14 +90,25 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
               </p>
             </div>
 
-            {dados.responsavel_id !== agente.id && (
-              <form action={assumirChamado}>
+            <div className="flex flex-wrap items-center gap-2">
+              {dados.responsavel_id !== agente.id && (
+                <form action={assumirChamado}>
+                  <input type="hidden" name="chamadoId" value={dados.id} />
+                  <button type="submit" className="botao-secundario">
+                    Assumir chamado
+                  </button>
+                </form>
+              )}
+              <form action={alternarTeste}>
                 <input type="hidden" name="chamadoId" value={dados.id} />
-                <button type="submit" className="botao-secundario">
-                  Assumir chamado
+                <button
+                  type="submit"
+                  className="text-xs font-semibold text-slate-500 hover:text-tea-turquesa-700"
+                >
+                  {dados.de_teste ? "Voltar a contar nos indicadores" : "Marcar como teste"}
                 </button>
               </form>
-            )}
+            </div>
           </div>
 
           <div className="mt-6 border-t border-slate-100 pt-5">

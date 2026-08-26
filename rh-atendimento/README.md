@@ -260,7 +260,25 @@ supabase/schema.sql             banco, RLS e bucket - rode uma vez
 
 ---
 
-## 7. Manutenção
+## 7. Chamados de teste
+
+Chamados abertos em homologação ou treinamento não devem sujar os indicadores. Por isso
+existe a marcação **de teste**: o chamado continua guardado e acessível, o colaborador
+segue vendo o dele, mas ele sai da fila e não conta em nenhum número.
+
+- **Um a um**: na tela de atendimento, botão *Marcar como teste* (e *Voltar a contar*).
+- **Na virada para a operação real**: rode no SQL Editor do Supabase, no dia em que o canal
+  entrar no ar, para separar tudo o que veio antes:
+
+```sql
+update public.chamados set de_teste = true where criado_em < now();
+```
+
+Depois disso, a fila e os indicadores passam a mostrar apenas o que entrar a partir dali.
+Para reconferir o que foi separado, use o filtro **Base › Somente testes** na tela de
+chamados.
+
+## 8. Manutenção
 
 **Espaço dos anexos.** O plano gratuito do Supabase dá 1 GB. Um atestado fotografado tem
 ~1 MB, então cabem cerca de mil documentos. Para acompanhar, veja **Storage › anexos** no
@@ -287,7 +305,7 @@ abertura.
 
 ---
 
-## 8. Identidade visual
+## 9. Identidade visual
 
 O sistema usa a paleta oficial do Grupo TEA. As cores estão declaradas em um único lugar,
 [`src/app/globals.css`](src/app/globals.css), e todo o resto se serve delas.
@@ -319,7 +337,7 @@ preciso mexer em código. Use sempre fundo transparente; o `simbolo-` deve ser u
 quadrado só do círculo, porque no cabeçalho ele aparece com cerca de 40 px de altura e o
 logo completo ficaria ilegível nesse tamanho.
 
-## 9. Comandos
+## 10. Comandos
 
 ```bash
 npm run dev        # desenvolvimento

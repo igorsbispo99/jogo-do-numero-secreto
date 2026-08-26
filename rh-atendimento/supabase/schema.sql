@@ -130,7 +130,13 @@ create table if not exists public.chamados (
   resolvido_em timestamptz
 );
 
+-- Chamados de teste (homologação, treinamento da equipe) continuam existindo,
+-- mas ficam fora da fila e dos indicadores, para não sujar os números.
+alter table public.chamados
+  add column if not exists de_teste boolean not null default false;
+
 create index if not exists chamados_status_idx on public.chamados (status, criado_em desc);
+create index if not exists chamados_teste_idx on public.chamados (de_teste, criado_em desc);
 create index if not exists chamados_cpf_idx on public.chamados (solicitante_cpf);
 create index if not exists chamados_protocolo_idx on public.chamados (protocolo);
 create index if not exists chamados_responsavel_idx on public.chamados (responsavel_id);
