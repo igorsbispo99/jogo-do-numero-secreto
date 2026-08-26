@@ -1,6 +1,12 @@
 "use server";
 
-import { acharSubcategoria, rotuloAssunto, tituloVinculo, type VinculoSlug } from "@/lib/catalogo";
+import {
+  acharSubcategoria,
+  rotuloAssunto,
+  tituloVinculo,
+  UNIDADES,
+  type VinculoSlug,
+} from "@/lib/catalogo";
 import { MAX_ANEXOS, TAMANHO_MAX_ANEXO, TIPOS_ANEXO_ACEITOS } from "@/lib/dominio";
 import { emailAvisoRh, emailChamadoAberto } from "@/lib/email";
 import { limparTentativasAntigas, registrarTentativa } from "@/lib/limite";
@@ -180,6 +186,12 @@ async function registrarSolicitacao(
 
   const sub = acharSubcategoria(vinculo, dados.categoria, dados.subcategoria);
   if (!sub) return { estado: "erro", mensagem: "Assunto inválido. Recomece a solicitação." };
+
+  // A unidade vem de lista fechada: é ela que sustenta o corte por unidade nos
+  // indicadores, então não pode entrar texto livre por outro caminho.
+  if (!dados.unidade || !UNIDADES.includes(dados.unidade as (typeof UNIDADES)[number])) {
+    return { estado: "erro", mensagem: "Selecione a sua unidade na lista." };
+  }
 
   const extras = validarCamposExtras(vinculo, dados.categoria, dados.subcategoria, formData);
   if (!extras.ok) return { estado: "erro", mensagem: extras.erro };

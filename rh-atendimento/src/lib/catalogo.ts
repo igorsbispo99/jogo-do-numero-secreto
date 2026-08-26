@@ -61,6 +61,26 @@ export const VINCULOS: { slug: VinculoSlug; titulo: string; descricao: string }[
   },
 ];
 
+/**
+ * Unidades do Grupo TEA, como aparecem no formulário e nos indicadores.
+ *
+ * Ficam em lista fechada de propósito: digitado à mão, o mesmo lugar viraria
+ * "Carrão", "carrao" e "Instituto Carrão" no relatório, e o corte por unidade
+ * perderia o sentido. Para incluir ou renomear uma unidade, edite aqui.
+ */
+export const UNIDADES = [
+  "FISIOMED ABA - ITINGUÇU",
+  "FISIOMED ABA - SÃO MIGUEL",
+  "FISIOMED ABA - CANGAÍBA",
+  "FISIOMED ABA - ADMINISTRATIVO",
+  "INSTITUTO TEA - CARRÃO",
+  "INSTITUTO TEA - ANÁLIA FRANCO",
+  "INSTITUTO TEA - BERRINI",
+  "INSTITUTO TEA - JOINVILLE",
+  "INSTITUTO TEA - ADMINISTRATIVO",
+  "GRUPO TEA - ADMINISTRATIVO",
+] as const;
+
 const CHAVE_PIX_CAMPOS: CampoExtra[] = [
   {
     nome: "tipo_chave",

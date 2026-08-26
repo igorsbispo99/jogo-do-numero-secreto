@@ -11,6 +11,7 @@ import {
   categoriasDo,
   type Categoria,
   type Subcategoria,
+  UNIDADES,
   type VinculoSlug,
   VINCULOS,
 } from "@/lib/catalogo";
@@ -203,9 +204,18 @@ export function FormularioChamado() {
 
               <div>
                 <label className="rotulo" htmlFor="unidade">
-                  Unidade / setor
+                  Unidade *
                 </label>
-                <input id="unidade" name="unidade" className="campo" />
+                <select id="unidade" name="unidade" required className="campo" defaultValue="">
+                  <option value="" disabled>
+                    Selecione sua unidade
+                  </option>
+                  {UNIDADES.map((unidade) => (
+                    <option key={unidade} value={unidade}>
+                      {unidade}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </section>

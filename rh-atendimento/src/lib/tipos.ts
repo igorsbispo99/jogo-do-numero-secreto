@@ -18,6 +18,8 @@ export type Chamado = {
   status: Status;
   prioridade: Prioridade;
   responsavel_id: string | null;
+  /** Chamado de teste: fica fora da fila e dos indicadores. */
+  de_teste: boolean;
   criado_em: string;
   atualizado_em: string;
   primeira_resposta_em: string | null;

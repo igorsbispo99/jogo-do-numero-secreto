@@ -5,7 +5,7 @@ import { CabecalhoRh } from "@/components/CabecalhoRh";
 import { Barras } from "@/components/graficos/Barras";
 import { Rosca } from "@/components/graficos/Rosca";
 import { Tendencia } from "@/components/graficos/Tendencia";
-import { rotuloAssunto, tituloVinculo, VINCULOS, type VinculoSlug } from "@/lib/catalogo";
+import { rotuloAssunto, tituloVinculo, UNIDADES, VINCULOS, type VinculoSlug } from "@/lib/catalogo";
 import { STATUS_ABERTOS, tituloStatus } from "@/lib/dominio";
 import { formatarBytes, formatarData } from "@/lib/format";
 import { COR_POR_STATUS, corDaSerie, type Ponto } from "@/lib/graficos";
@@ -182,6 +182,9 @@ export default async function PaginaIndicadores({
     ? new Date(Date.now() - periodo.dias * 2 * 24 * 60 * 60_000)
     : null;
 
+  // Chamados de teste nunca entram nos indicadores.
+  consulta = consulta.eq("de_teste", false);
+
   if (inicioAnterior) consulta = consulta.gte("criado_em", inicioAnterior.toISOString());
   if (filtros.vinculo) consulta = consulta.eq("vinculo", filtros.vinculo);
   if (filtros.unidade) consulta = consulta.eq("unidade", filtros.unidade);
@@ -195,7 +198,12 @@ export default async function PaginaIndicadores({
         .select("tamanho_bytes")
         .is("removido_em", null)
         .limit(LIMITE_LEITURA),
-      supabase.from("chamados").select("unidade").not("unidade", "is", null).limit(LIMITE_LEITURA),
+      supabase
+        .from("chamados")
+        .select("unidade")
+        .eq("de_teste", false)
+        .not("unidade", "is", null)
+        .limit(LIMITE_LEITURA),
     ]);
 
   const todos = (linhas ?? []) as LinhaChamado[];
@@ -268,9 +276,9 @@ export default async function PaginaIndicadores({
     .sort((a, b) => b.total - a.total);
 
   const cargaMaxima = Math.max(...porAnalista.map((p) => p.total), 1);
-  const listaUnidades = [
-    ...new Set((unidades ?? []).map((u) => (u.unidade ?? "").trim()).filter(Boolean)),
-  ].sort();
+  const usadas = new Set((unidades ?? []).map((u) => (u.unidade ?? "").trim()).filter(Boolean));
+  // Mostra as unidades do catálogo mais qualquer uma antiga que ainda apareça.
+  const listaUnidades = [...new Set([...UNIDADES, ...usadas])].sort();
 
   const bytesGuardados = (anexos ?? []).reduce((soma, a) => soma + (a.tamanho_bytes ?? 0), 0);
   const usoArmazenamento = Math.min(100, (bytesGuardados / COTA_ARMAZENAMENTO) * 100);
@@ -570,7 +578,7 @@ export default async function PaginaIndicadores({
           Os tempos usam a <strong>mediana</strong> — o valor do meio, que não é distorcido por um
           chamado esquecido por semanas. Chamados sem resposta ou ainda não resolvidos não entram
           nesses cálculos. As variações comparam com o período imediatamente anterior de mesma
-          duração.
+          duração. Chamados marcados como teste ficam de fora de todos os números.
         </p>
       </main>
     </>
