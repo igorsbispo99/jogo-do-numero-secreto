@@ -41,6 +41,7 @@ export function FormularioChamado() {
      campo pode depender da resposta de outro - por exemplo, o e-mail
      corporativo só é pedido a quem disse que tem um. */
   const [extras, setExtras] = useState<Record<string, string>>({});
+  const [supervisores, setSupervisores] = useState<string[]>([""]);
 
   const anotarExtra = (nome: string, valor: string) =>
     setExtras((atuais) => ({ ...atuais, [nome]: valor }));
@@ -76,7 +77,10 @@ export function FormularioChamado() {
               <button
                 key={opcao.slug}
                 type="button"
-                onClick={() => setVinculo(opcao.slug)}
+                onClick={() => {
+                  setVinculo(opcao.slug);
+                  setSupervisores([""]);
+                }}
                 className="cartao p-5 text-left transition hover:border-tea-turquesa-600 hover:bg-tea-turquesa-50"
               >
                 <span className="block text-base font-bold text-slate-900">{opcao.titulo}</span>
@@ -201,6 +205,52 @@ export function FormularioChamado() {
                   autoComplete="tel"
                 />
               </div>
+
+              {vinculo === "estagio" && (
+                <div className="sm:col-span-2">
+                  <label className="rotulo" htmlFor="supervisor-0">
+                    Supervisor(es) responsável(is) *
+                  </label>
+                  {supervisores.map((nome, indice) => (
+                    <div key={indice} className="mt-2 flex gap-2">
+                      <input
+                        id={`supervisor-${indice}`}
+                        name="supervisor"
+                        className="campo"
+                        required={indice === 0}
+                        placeholder={indice === 0 ? "Nome completo do supervisor" : "Outro supervisor"}
+                        value={nome}
+                        onChange={(e) =>
+                          setSupervisores((atuais) =>
+                            atuais.map((v, i) => (i === indice ? e.target.value : v)),
+                          )
+                        }
+                      />
+                      {supervisores.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSupervisores((atuais) => atuais.filter((_, i) => i !== indice))
+                          }
+                          className="shrink-0 px-2 text-sm font-semibold text-slate-500 hover:text-tea-vinho-600"
+                        >
+                          remover
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setSupervisores((atuais) => [...atuais, ""])}
+                    className="mt-2 text-xs font-semibold text-tea-turquesa-700 hover:underline"
+                  >
+                    + Adicionar outro supervisor
+                  </button>
+                  <p className="mt-1 text-xs text-slate-500">
+                    É com essa pessoa que o RH confirma frequência, recesso e ajustes.
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="rotulo" htmlFor="unidade">

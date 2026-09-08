@@ -129,12 +129,18 @@ export async function emailChamadoAberto(dados: {
   });
 }
 
+const avisoDeAnexos = (quantidade: number | undefined) =>
+  quantidade
+    ? [`A resposta veio com ${quantidade} anexo${quantidade === 1 ? "" : "s"} para você baixar.`]
+    : [];
+
 export async function emailNovaResposta(dados: {
   para: string;
   nome: string;
   protocolo: string;
   autor: string;
   trecho: string;
+  anexos?: number;
 }) {
   const link = `${urlBase()}/consulta?protocolo=${encodeURIComponent(dados.protocolo)}`;
   await enviar({
@@ -145,7 +151,8 @@ export async function emailNovaResposta(dados: {
       `Olá, ${escapar(dados.nome.split(" ")[0])}!`,
       `${escapar(dados.autor)} respondeu o chamado ${negrito(dados.protocolo)}:`,
       `<em style="color:#475569">${escapar(dados.trecho)}</em>`,
-      "Abra o chamado para ler a resposta completa e responder.",
+      ...avisoDeAnexos(dados.anexos),
+      "Abra a solicitação para ler a resposta completa e responder.",
     ],
     botao: { texto: "Ver resposta", url: link },
   });
@@ -158,6 +165,7 @@ export async function emailChamadoResolvido(dados: {
   /** Resposta que encerrou o atendimento, quando houver. */
   autor?: string;
   trecho?: string;
+  anexos?: number;
 }) {
   const link = `${urlBase()}/consulta?protocolo=${encodeURIComponent(dados.protocolo)}`;
 
@@ -177,6 +185,7 @@ export async function emailChamadoResolvido(dados: {
       `Olá, ${escapar(dados.nome.split(" ")[0])}!`,
       `A solicitação ${negrito(dados.protocolo)} foi resolvida pelo RH.`,
       ...respostaFinal,
+      ...avisoDeAnexos(dados.anexos),
       "Se o assunto não foi totalmente resolvido, é só responder por lá que ele volta para a fila.",
       "Conte com a gente! 💙",
     ],

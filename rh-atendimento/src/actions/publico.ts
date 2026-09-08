@@ -7,7 +7,7 @@ import {
   UNIDADES,
   type VinculoSlug,
 } from "@/lib/catalogo";
-import { MAX_ANEXOS, TAMANHO_MAX_ANEXO, TIPOS_ANEXO_ACEITOS } from "@/lib/dominio";
+import { assinarAnexos, lerAnexos, registrarAnexos, validarAnexos } from "@/lib/anexos";
 import { emailAvisoRh, emailChamadoAberto } from "@/lib/email";
 import { limparTentativasAntigas, registrarTentativa } from "@/lib/limite";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -54,85 +54,6 @@ export type EstadoConsulta =
 // ---------------------------------------------------------------------------
 // Anexos
 // ---------------------------------------------------------------------------
-
-const PASTA_RASCUNHO = "rascunho/";
-
-type AnexoEnviado = { caminho: string; nome: string; tipo: string; tamanho: number };
-
-/**
- * O navegador já subiu os arquivos direto para o Supabase (veja
- * actions/upload.ts). O formulário traz apenas os endereços deles.
- */
-function lerAnexos(formData: FormData): AnexoEnviado[] {
-  const caminhos = formData.getAll("anexo_caminho").map(String).filter(Boolean);
-  const nomes = formData.getAll("anexo_nome").map(String);
-  const tipos = formData.getAll("anexo_tipo").map(String);
-  const tamanhos = formData.getAll("anexo_tamanho").map((v) => Number(v) || 0);
-
-  return caminhos.slice(0, MAX_ANEXOS).map((caminho, i) => ({
-    caminho,
-    nome: (nomes[i] ?? "anexo").slice(0, 200),
-    tipo: tipos[i] ?? "",
-    tamanho: tamanhos[i] ?? 0,
-  }));
-}
-
-function validarAnexos(anexos: AnexoEnviado[]): string | null {
-  if (anexos.length > MAX_ANEXOS) return `Envie no máximo ${MAX_ANEXOS} arquivos.`;
-  for (const anexo of anexos) {
-    // Só aceitamos arquivos recém-enviados, nunca um caminho digitado à mão.
-    if (!anexo.caminho.startsWith(PASTA_RASCUNHO)) {
-      return "Anexo inválido. Selecione o arquivo novamente.";
-    }
-    if (anexo.tamanho > TAMANHO_MAX_ANEXO) {
-      return `"${anexo.nome}" passa de 8 MB. Reduza a qualidade da foto e tente de novo.`;
-    }
-    if (anexo.tipo && !TIPOS_ANEXO_ACEITOS.includes(anexo.tipo)) {
-      return `"${anexo.nome}" não é um formato aceito. Envie PDF, JPG ou PNG.`;
-    }
-  }
-  return null;
-}
-
-/** Move os arquivos do rascunho para a pasta do chamado e registra cada um. */
-async function registrarAnexos(
-  chamadoId: string,
-  anexos: AnexoEnviado[],
-  mensagemId: string | null,
-): Promise<void> {
-  const supabase = supabaseAdmin();
-
-  for (const anexo of anexos) {
-    const destino = `${chamadoId}/${anexo.caminho.slice(PASTA_RASCUNHO.length)}`;
-    const { error } = await supabase.storage.from("anexos").move(anexo.caminho, destino);
-
-    if (error) console.error("[anexo] falha ao mover:", error.message);
-
-    await supabase.from("chamado_anexos").insert({
-      chamado_id: chamadoId,
-      mensagem_id: mensagemId,
-      caminho: error ? anexo.caminho : destino,
-      nome_arquivo: anexo.nome,
-      tipo_mime: anexo.tipo || null,
-      tamanho_bytes: anexo.tamanho || null,
-    });
-  }
-}
-
-async function assinarAnexos(anexos: Anexo[]): Promise<AnexoComLink[]> {
-  if (anexos.length === 0) return [];
-  const supabase = supabaseAdmin();
-
-  return Promise.all(
-    anexos.map(async (anexo) => {
-      if (anexo.removido_em) return { ...anexo, url: null };
-      const { data } = await supabase.storage
-        .from("anexos")
-        .createSignedUrl(anexo.caminho, 60 * 30, { download: anexo.nome_arquivo });
-      return { ...anexo, url: data?.signedUrl ?? null };
-    }),
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Abrir chamado
@@ -193,6 +114,18 @@ async function registrarSolicitacao(
     return { estado: "erro", mensagem: "Selecione a sua unidade na lista." };
   }
 
+  // Estagiário informa quem o supervisiona: é com essa pessoa que o RH confirma
+  // frequência, recesso e ajustes.
+  const supervisores = formData
+    .getAll("supervisor")
+    .map((v) => String(v).trim())
+    .filter(Boolean)
+    .slice(0, 5);
+
+  if (vinculo === "estagio" && supervisores.length === 0) {
+    return { estado: "erro", mensagem: "Informe pelo menos um supervisor responsável." };
+  }
+
   const extras = validarCamposExtras(vinculo, dados.categoria, dados.subcategoria, formData);
   if (!extras.ok) return { estado: "erro", mensagem: extras.erro };
 
@@ -227,6 +160,7 @@ async function registrarSolicitacao(
       solicitante_cpf: dados.cpf,
       solicitante_telefone: dados.telefone ?? null,
       unidade: dados.unidade ?? null,
+      supervisores: supervisores.length > 0 ? supervisores.join("; ") : null,
       vinculo,
       categoria: dados.categoria,
       subcategoria: dados.subcategoria,
@@ -305,13 +239,19 @@ async function carregarChamadoPublico(
 
   if (!chamado || chamado.solicitante_cpf !== cpf) return null;
 
-  const [{ data: mensagens }, { data: anexos }, { data: etapas }] = await Promise.all([
+  const [{ data: mensagens }, { data: internas }, { data: anexos }, { data: etapas }] =
+    await Promise.all([
     supabase
       .from("chamado_mensagens")
       .select("id, autor_tipo, autor_nome, corpo, criado_em")
       .eq("chamado_id", chamado.id)
       .eq("interna", false) // notas internas do RH nunca saem daqui
       .order("criado_em", { ascending: true }),
+    supabase
+      .from("chamado_mensagens")
+      .select("id")
+      .eq("chamado_id", chamado.id)
+      .eq("interna", true),
     supabase
       .from("chamado_anexos")
       .select("*")
@@ -327,10 +267,16 @@ async function carregarChamadoPublico(
 
   const { solicitante_cpf: _cpf, id: _id, ...publico } = chamado;
 
+  // Arquivo preso a uma nota interna acompanha o sigilo dela.
+  const idsInternas = new Set((internas ?? []).map((m) => m.id));
+  const anexosVisiveis = ((anexos ?? []) as Anexo[]).filter(
+    (anexo) => !anexo.mensagem_id || !idsInternas.has(anexo.mensagem_id),
+  );
+
   return {
     chamado: publico as ChamadoPublico["chamado"],
     mensagens: (mensagens ?? []) as ChamadoPublico["mensagens"],
-    anexos: await assinarAnexos((anexos ?? []) as Anexo[]),
+    anexos: await assinarAnexos(anexosVisiveis),
     etapas: (etapas ?? []) as ChamadoPublico["etapas"],
   };
 }

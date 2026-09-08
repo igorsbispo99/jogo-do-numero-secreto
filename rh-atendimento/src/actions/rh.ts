@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { lerAnexos, registrarAnexos, validarAnexos } from "@/lib/anexos";
 import { emailChamadoResolvido, emailNovaResposta } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAgente, supabaseServidor } from "@/lib/supabase/server";
@@ -84,14 +85,26 @@ export async function responderChamado(
 
   if (!chamado) return { estado: "erro", mensagem: "Chamado não encontrado." };
 
-  await supabase.from("chamado_mensagens").insert({
-    chamado_id: chamado.id,
-    autor_tipo: "rh",
-    autor_nome: agente.nome,
-    autor_id: agente.id,
-    corpo: mensagem,
-    interna,
-  });
+  const anexos = lerAnexos(formData);
+  const erroAnexo = validarAnexos(anexos);
+  if (erroAnexo) return { estado: "erro", mensagem: erroAnexo };
+
+  const { data: novaMensagem } = await supabase
+    .from("chamado_mensagens")
+    .insert({
+      chamado_id: chamado.id,
+      autor_tipo: "rh",
+      autor_nome: agente.nome,
+      autor_id: agente.id,
+      corpo: mensagem,
+      interna,
+    })
+    .select("id")
+    .single();
+
+  if (anexos.length > 0) {
+    await registrarAnexos(chamado.id, anexos, novaMensagem?.id ?? null);
+  }
 
   const atualizacao: Record<string, unknown> = {};
   if (!interna && !chamado.primeira_resposta_em) {
@@ -128,6 +141,7 @@ export async function responderChamado(
       protocolo: chamado.protocolo,
       autor: agente.nome,
       trecho,
+      anexos: anexos.length,
     };
 
     if (statusFinal === "resolvido") {
@@ -139,7 +153,14 @@ export async function responderChamado(
 
   revalidatePath(`/rh/chamados/${chamado.id}`);
   revalidatePath("/rh");
-  return { estado: "ok", mensagem: interna ? "Nota interna registrada." : "Resposta enviada." };
+  return {
+    estado: "ok",
+    mensagem: interna
+      ? "Nota interna registrada."
+      : anexos.length > 0
+        ? `Resposta enviada com ${anexos.length} anexo${anexos.length === 1 ? "" : "s"}.`
+        : "Resposta enviada.",
+  };
 }
 
 export async function atualizarChamado(

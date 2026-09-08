@@ -199,6 +199,9 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                   <Linha rotulo="Telefone" valor={dados.solicitante_telefone} />
                 )}
                 {dados.unidade && <Linha rotulo="Unidade" valor={dados.unidade} />}
+                {dados.supervisores && (
+                  <Linha rotulo="Supervisor(es)" valor={dados.supervisores} />
+                )}
                 <Linha
                   rotulo="Responsável"
                   valor={responsavel?.nome ?? "Sem responsável"}

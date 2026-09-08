@@ -9,6 +9,8 @@ export type Chamado = {
   solicitante_cpf: string;
   solicitante_telefone: string | null;
   unidade: string | null;
+  /** Só para estagiários: quem supervisiona a pessoa. */
+  supervisores: string | null;
   vinculo: VinculoSlug;
   categoria: string;
   subcategoria: string;

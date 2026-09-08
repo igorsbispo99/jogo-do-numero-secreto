@@ -148,6 +148,10 @@ Os arquivos **não passam pelo servidor do site**: a Vercel recusa requisições
 O bucket também tem limite próprio de 8 MB por arquivo e lista de formatos aceitos, para
 valer mesmo que alguém contorne a tela.
 
+Tanto o colaborador quanto o RH podem anexar arquivos — o RH anexa junto da resposta ou de
+uma nota interna. **Arquivo preso a uma nota interna não aparece para o colaborador**: ele
+acompanha o sigilo da nota.
+
 ### Retenção: anexos somem em 30 dias
 
 Documento pessoal não deve ficar guardado além do necessário — é princípio da LGPD e é o
