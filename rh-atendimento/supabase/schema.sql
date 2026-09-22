@@ -110,6 +110,7 @@ create table if not exists public.chamados (
   solicitante_cpf text not null,          -- somente dígitos
   solicitante_telefone text,
   unidade text,
+  supervisores text,             -- estagiários: quem supervisiona
   vinculo vinculo_tipo not null,
 
   -- o que é
@@ -133,7 +134,8 @@ create table if not exists public.chamados (
 -- Chamados de teste (homologação, treinamento da equipe) continuam existindo,
 -- mas ficam fora da fila e dos indicadores, para não sujar os números.
 alter table public.chamados
-  add column if not exists de_teste boolean not null default false;
+  add column if not exists de_teste boolean not null default false,
+  add column if not exists supervisores text;
 
 create index if not exists chamados_status_idx on public.chamados (status, criado_em desc);
 create index if not exists chamados_teste_idx on public.chamados (de_teste, criado_em desc);

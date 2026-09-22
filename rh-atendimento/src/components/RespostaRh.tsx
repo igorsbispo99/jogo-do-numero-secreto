@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { responderChamado, type EstadoSimples } from "@/actions/rh";
+import { CampoAnexos } from "@/components/CampoAnexos";
 import { STATUS } from "@/lib/dominio";
 
 const INICIAL: EstadoSimples = { estado: "inicial" };
@@ -10,10 +11,15 @@ const INICIAL: EstadoSimples = { estado: "inicial" };
 export function RespostaRh({ chamadoId }: { chamadoId: string }) {
   const [estado, acao] = useActionState(responderChamado, INICIAL);
   const [interna, setInterna] = useState(false);
+  // Trocar a chave remonta o campo de anexos, limpando a lista já enviada.
+  const [rodada, setRodada] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (estado.estado === "ok") formRef.current?.reset();
+    if (estado.estado === "ok") {
+      formRef.current?.reset();
+      setRodada((n) => n + 1);
+    }
   }, [estado]);
 
   return (
@@ -53,7 +59,14 @@ export function RespostaRh({ chamadoId }: { chamadoId: string }) {
         }
       />
 
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
+      <div className="mt-4">
+        <label className="rotulo" htmlFor={`anexos-rh-${rodada}`}>
+          Anexar arquivos {interna ? "(ficam restritos ao RH)" : "(o colaborador poderá baixar)"}
+        </label>
+        <CampoAnexos key={rodada} id={`anexos-rh-${rodada}`} />
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <label className="rotulo" htmlFor="novoStatus">
             Status após enviar
