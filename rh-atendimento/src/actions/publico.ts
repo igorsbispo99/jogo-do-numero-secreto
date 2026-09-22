@@ -59,6 +59,21 @@ export type EstadoConsulta =
 // Abrir chamado
 // ---------------------------------------------------------------------------
 
+/**
+ * O banco (ou o cache de schema do Supabase) ainda não conhece esta coluna?
+ *
+ * Serve para o site continuar de pé entre o deploy do código e a execução da
+ * migração no SQL Editor, que são dois passos separados.
+ */
+function colunaInexistente(erro: { code?: string; message?: string }, coluna: string): boolean {
+  const texto = (erro.message ?? "").toLowerCase();
+  // 42703: undefined_column no Postgres. PGRST204: coluna fora do schema cache.
+  return (
+    (erro.code === "42703" || erro.code === "PGRST204" || texto.includes("does not exist")) &&
+    texto.includes(coluna)
+  );
+}
+
 export async function abrirChamado(
   anterior: EstadoAbertura,
   formData: FormData,
@@ -152,24 +167,37 @@ async function registrarSolicitacao(
 
   const supabase = supabaseAdmin();
 
-  const { data: chamado, error } = await supabase
-    .from("chamados")
-    .insert({
-      solicitante_nome: dados.nome,
-      solicitante_email: dados.email,
-      solicitante_cpf: dados.cpf,
-      solicitante_telefone: dados.telefone ?? null,
-      unidade: dados.unidade ?? null,
-      supervisores: supervisores.length > 0 ? supervisores.join("; ") : null,
-      vinculo,
-      categoria: dados.categoria,
-      subcategoria: dados.subcategoria,
-      assunto,
-      descricao,
-      dados_extras: extras.dados,
-    })
-    .select("id, protocolo")
-    .single();
+  const cadastro = {
+    solicitante_nome: dados.nome,
+    solicitante_email: dados.email,
+    solicitante_cpf: dados.cpf,
+    solicitante_telefone: dados.telefone ?? null,
+    unidade: dados.unidade ?? null,
+    supervisores: supervisores.length > 0 ? supervisores.join("; ") : null,
+    vinculo,
+    categoria: dados.categoria,
+    subcategoria: dados.subcategoria,
+    assunto,
+    descricao,
+    dados_extras: extras.dados,
+  };
+
+  const gravar = (registro: Record<string, unknown>) =>
+    supabase.from("chamados").insert(registro).select("id, protocolo").single();
+
+  let { data: chamado, error } = await gravar(cadastro);
+
+  // O site sobe na Vercel antes do banco receber a migração. Enquanto a coluna
+  // "supervisores" não existir lá, o chamado é gravado sem ela e os nomes
+  // seguem na descrição - abrir solicitação nunca pode parar por causa disso.
+  if (error && colunaInexistente(error, "supervisores")) {
+    console.warn('[chamado] coluna "supervisores" ausente no banco - rode supabase/schema.sql');
+    const { supervisores: nomes, ...semSupervisores } = cadastro;
+    ({ data: chamado, error } = await gravar({
+      ...semSupervisores,
+      descricao: nomes ? `${descricao}\n\nSupervisor(es): ${nomes}` : descricao,
+    }));
+  }
 
   if (error || !chamado) {
     console.error("[chamado] falha ao registrar:", error?.message);

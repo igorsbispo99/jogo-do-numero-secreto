@@ -133,6 +133,19 @@ async function conferir(): Promise<{ itens: Item[]; conclusao: string }> {
     detalhe: erroPublico ? "Rode o schema.sql de novo para acrescentá-la." : undefined,
   });
 
+  // Supervisores do estágio: sem a coluna o chamado ainda é aberto, mas os
+  // nomes vão parar dentro da descrição em vez do campo próprio.
+  const { error: erroSupervisores } = await supabase
+    .from("chamados")
+    .select("supervisores", { head: true, count: "exact" });
+  itens.push({
+    titulo: "Coluna chamados.supervisores (estágio)",
+    ok: !erroSupervisores,
+    detalhe: erroSupervisores
+      ? "Rode o schema.sql de novo: por enquanto os supervisores entram na descrição do chamado."
+      : undefined,
+  });
+
   const { data: buckets, error: erroBucket } = await supabase.storage.listBuckets();
   const temBucket = Boolean(buckets?.some((b) => b.id === "anexos"));
   itens.push({
