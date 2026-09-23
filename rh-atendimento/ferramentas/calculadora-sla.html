@@ -119,6 +119,10 @@
   .deadline { font-family: var(--display); font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
   .countdown { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
   .countdown.late { color: var(--critica); }
+  .deadlines { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .deadlines > div { display: grid; gap: 2px; align-content: start; }
+  .deadline-rule { color: var(--muted); font-size: 0.84rem; }
+  .level-card .sla-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-top: 4px; }
   .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 0.9rem; }
   .kv dt { color: var(--muted); }
   .kv dd { margin: 0; font-weight: 600; }
@@ -231,19 +235,31 @@
             <p class="eyebrow">Prioridade</p>
             <p class="level-name" id="res-nivel">—</p>
           </div>
-          <div>
-            <p class="eyebrow">Primeira resposta até</p>
-            <p class="deadline" id="res-prazo">—</p>
-            <p class="countdown" id="res-contagem"></p>
+          <div class="deadlines">
+            <div>
+              <p class="eyebrow">Primeira resposta até</p>
+              <p class="deadline" id="res-prazo">—</p>
+              <p class="countdown" id="res-contagem"></p>
+              <p class="deadline-rule" id="res-regra">—</p>
+            </div>
+            <div>
+              <p class="eyebrow">Resolução até</p>
+              <p class="deadline" id="res-resolucao">—</p>
+              <p class="countdown" id="res-contagem-resolucao"></p>
+              <p class="deadline-rule" id="res-regra-resolucao">—</p>
+            </div>
           </div>
           <dl class="kv">
-            <dt>Regra</dt><dd id="res-regra">—</dd>
             <dt>No portal, marque</dt><dd id="res-portal">—</dd>
           </dl>
         </div>
         <div class="result-body">
           <div class="alert" id="res-escalar" hidden></div>
           <div class="note" id="res-dica" hidden></div>
+          <div>
+            <p class="eyebrow" style="margin-bottom:8px">Como a resolução foi calculada</p>
+            <ol class="trail" id="res-trilha-resolucao"></ol>
+          </div>
           <div>
             <p class="eyebrow" style="margin-bottom:8px">Por que esse nível</p>
             <ol class="trail" id="res-trilha"></ol>
@@ -266,7 +282,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Assunto</th><th>Prioridade base</th><th>Sobe quando</th><th>Por que</th><th></th></tr></thead>
+        <thead><tr><th>Assunto</th><th>Prioridade base</th><th>Resolução</th><th>Sobe quando</th><th>Por que</th><th></th></tr></thead>
         <tbody id="tabela"></tbody>
       </table>
     </div>
@@ -278,7 +294,7 @@
     <div class="rules">
       <div>
         <h2>Os quatro níveis</h2>
-        <p class="lede">Prazos da proposta do Head de RH. O prazo é da primeira resposta, não da solução. A primeira resposta confirma o recebimento, diz o próximo passo e informa quando a pessoa terá retorno.</p>
+        <p class="lede">Cada chamado tem dois prazos. A <strong>primeira resposta</strong> segue a proposta do Head de RH: confirma o recebimento, diz o próximo passo e informa quando a pessoa terá retorno. A <strong>resolução</strong> é o prazo para entregar o que foi pedido e finalizar o chamado.</p>
         <div class="levels" id="niveis" style="margin-top:14px"></div>
       </div>
 
@@ -307,12 +323,25 @@
       </div>
 
       <div class="panel section">
-        <h2>Como o prazo é contado</h2>
+        <h2>Como o prazo de resolução é definido</h2>
+        <ol>
+          <li><strong>Cada assunto tem um prazo próprio em dias úteis</strong>, de acordo com o trabalho que ele exige. Exemplos: problema de acesso, 1 dia útil. Pagamento não recebido, 2 dias úteis. Divergência de valor, 5 dias úteis. Veja todos na aba “Assuntos”.</li>
+          <li><strong>Se a prioridade subir por um agravante ou por uma data</strong>, a resolução também fica mais curta: no máximo 1 dia útil em Crítica, 2 em Alta e 5 em Normal.</li>
+          <li><strong>Crítica:</strong> em 1 dia útil, resolva ou contenha o risco e registre no chamado um plano, com data, para a solução definitiva.</li>
+          <li><strong>Planejada:</strong> o prazo mostrado é uma referência. Combine a data final com a pessoa na triagem e registre no chamado.</li>
+          <li><strong>Data informada no chamado:</strong> quando o pedido precisa estar pronto antes de uma data (início do contrato, vigência, retorno, férias), a resolução vence no último dia útil antes dela. Nas férias de CLT, vence antes do prazo de aviso de 30 dias.</li>
+          <li><strong>Prazo pausado:</strong> quando o RH depende de documento ou resposta da pessoa, o prazo de resolução fica parado até ela responder. Registre a pausa no chamado.</li>
+        </ol>
+      </div>
+
+      <div class="panel section">
+        <h2>Como os prazos são contados</h2>
         <ul>
           <li><strong>Crítica:</strong> 2 horas úteis a partir da abertura. Escale na hora, mesmo fora do expediente.</li>
           <li><strong>Alta:</strong> até o fim do expediente do dia. Se faltarem menos de 2 horas úteis no dia (ou o chamado chegar fora do expediente), o prazo passa para as 12h do próximo dia útil.</li>
           <li><strong>Normal:</strong> 1 dia útil de expediente a partir da abertura. Exemplo: aberto na terça às 15h, vence na quarta às 15h.</li>
           <li><strong>Planejada:</strong> triagem em até 2 dias úteis. Na triagem, combine uma data de entrega com a pessoa e registre no chamado.</li>
+          <li><strong>Resolução:</strong> dias úteis inteiros a partir da abertura. Exemplo: 2 dias úteis a partir de terça às 15h vencem na quinta às 15h.</li>
           <li>Não contam sábados, domingos e feriados. O ajuste abaixo fica salvo apenas neste navegador.</li>
         </ul>
         <div class="settings">
@@ -339,6 +368,13 @@
     alta:      { nome: "Alta",      portal: "Alta",    regra: "No mesmo dia útil", desc: "Pagamento em risco, admissão ou desligamento próximo, acesso bloqueado, prazo legal." },
     normal:    { nome: "Normal",    portal: "Normal",  regra: "Em até 1 dia útil", desc: "Benefícios, documentos, ponto, dúvidas de folha, cadastro." },
     planejada: { nome: "Planejada", portal: "Baixa",   regra: "Triagem em até 2 dias úteis e prazo combinado", desc: "Relatórios, campanhas, políticas, melhorias, projetos e pedidos programáveis." }
+  };
+  var TETO_RESOLUCAO = { critica: 1, alta: 2, normal: 5, planejada: null };
+  var RESOLUCAO_NIVEL = {
+    critica: "Até 1 dia útil: resolver ou conter o risco e registrar o plano",
+    alta: "Até 2 dias úteis",
+    normal: "Até 5 dias úteis",
+    planejada: "Data combinada na triagem"
   };
   function rank(n) { return ORDEM.indexOf(n); }
   function maxN(a, b) { return rank(a) >= rank(b) ? a : b; }
@@ -477,7 +513,55 @@
       dica: "Avise o supervisor do estágio e a coordenação da unidade no mesmo dia." },
     { v: "estagio", cat: "Contrato", sub: "Dúvidas sobre o contrato", base: "normal", por: "Dúvida sem impacto imediato." }
   ];
-  TEMAS.forEach(function (t, i) { t.id = i; });
+  /* Prazo de resolução por assunto, em dias úteis. "Assunto|Detalhe" vale para os assuntos com detalhe. */
+  var RESOLUCAO = {
+    "Solicitar acesso ao AnClinic": 2, "Problema de acesso ao AnClinic": 1,
+    "Dúvida geral sobre RH": 3, "Declaração ou documento": 3, "Atualização de dados cadastrais": 3,
+    "Sugestão, elogio ou reclamação|Reclamação": 5, "Sugestão, elogio ou reclamação|Sugestão ou elogio": 15,
+    "Outro assunto": 5,
+    "Assinatura de novo contrato": 2, "Aditivo ou renovação": 5, "Segunda via do contrato": 3, "Dúvidas sobre o contrato": 3,
+    "Solicitar distrato": 5, "Dúvidas sobre distrato": 3, "Documentos do distrato": 3,
+    "Alterar minha chave Pix": 2, "Mudança de chave Pix": 2,
+    "Envio de nota fiscal": 2, "Pagamento não recebido": 2, "Divergência de valor": 5, "Dúvidas sobre pagamento": 3,
+    "Comunicar afastamento|Doença": 2, "Comunicar afastamento|Acidente de trabalho ou de trajeto": 1,
+    "Comunicar afastamento|Licença maternidade": 3, "Comunicar afastamento|Licença paternidade": 2, "Comunicar afastamento|Outro": 2,
+    "Retorno de afastamento": 3, "Dúvidas sobre afastamento": 3,
+    "Solicitar férias": 10, "Cancelar ou reprogramar férias": 3, "Dúvidas sobre férias": 3,
+    "Solicitar auxílio creche": 5, "Envio de comprovante mensal": 3, "Dúvidas sobre auxílio creche": 3,
+    "Envio de atestado|Até 15 dias": 2, "Envio de atestado|Mais de 15 dias": 2,
+    "Ajuste de marcação de ponto": 3, "Banco de horas": 5, "Acesso ao sistema de ponto": 1,
+    "Plano de saúde / odontológico|Inclusão ou exclusão de dependente": 5, "Plano de saúde / odontológico|Carteirinha para uso imediato": 1,
+    "Vale transporte / alimentação": 5, "Dúvidas sobre benefícios": 3,
+    "Holerite / demonstrativo": 2, "Divergência de valor ou desconto": 5,
+    "Bolsa não recebida": 2, "Comprovante ou recibo da bolsa": 3, "Dúvidas sobre a bolsa auxílio": 3,
+    "Solicitar descanso remunerado": 5, "Cancelar ou reprogramar": 3, "Dúvidas sobre descanso remunerado": 3,
+    "Assinatura do termo de compromisso": 2, "Renovação ou aditivo": 5, "Segunda via do termo": 3,
+    "Encerramento do estágio": 5, "Dúvidas sobre o contrato": 3
+  };
+  /* O que conta como "resolvido" nos assuntos em que isso não é óbvio. */
+  var ENTREGA = {
+    "Solicitar distrato": "Distrato assinado, acessos retirados e último pagamento programado.",
+    "Encerramento do estágio": "Termo de realização emitido, recesso acertado e acessos retirados.",
+    "Pagamento não recebido": "Pagamento feito, ou nova data confirmada por escrito para a pessoa.",
+    "Bolsa não recebida": "Bolsa paga, ou nova data confirmada por escrito para a pessoa.",
+    "Divergência de valor": "Diferença apurada e explicada. Se houver acerto, informe em qual pagamento ele entra.",
+    "Divergência de valor ou desconto": "Diferença apurada e explicada. Se houver acerto, informe em qual folha ele entra.",
+    "Solicitar férias": "Férias programadas no sistema e aviso entregue à pessoa.",
+    "Comunicar afastamento": "Afastamento registrado, gestor avisado e, se for o caso, encaminhamento ao INSS ou CAT emitida.",
+    "Alterar minha chave Pix": "Troca confirmada com a pessoa por outro canal e cadastrada antes do próximo pagamento.",
+    "Mudança de chave Pix": "Troca confirmada com a pessoa por outro canal e cadastrada antes do próximo pagamento.",
+    "Plano de saúde / odontológico": "Pedido enviado à operadora e protocolo informado à pessoa. O prazo da operadora não conta para o RH."
+  };
+  TEMAS.forEach(function (t, i) {
+    t.id = i;
+    if (t.data) t.data.limite = t.sub === "Solicitar férias" ? "aviso30" : "vespera";
+  });
+  function diasResolucao(t, variante) {
+    var d = variante ? RESOLUCAO[t.sub + "|" + variante.nome] : RESOLUCAO[t.sub];
+    if (typeof d !== "number") d = RESOLUCAO[t.sub];
+    return typeof d === "number" ? d : 5;
+  }
+  function fmtDias(n) { return n === 1 ? "1 dia útil" : n + " dias úteis"; }
 
   var VINCULOS = [
     { slug: "pj", nome: "PJ" }, { slug: "clt", nome: "CLT" }, { slug: "estagio", nome: "Estágio" }
@@ -649,11 +733,12 @@
   function calcular() {
     var t = TEMAS[estado.temaId];
     var trilha = [];
-    var nivel = t.base, porBase = t.por, nomeBase = t.sub;
+    var nivel = t.base, porBase = t.por, nomeBase = t.sub, varSel = null;
     if (t.variantes) {
       var o = t.variantes.opcoes[+$("variante").value || 0];
-      nivel = o.nivel; porBase = o.por; nomeBase = t.sub + " · " + o.nome;
+      nivel = o.nivel; porBase = o.por; nomeBase = t.sub + " · " + o.nome; varSel = o;
     }
+    var nivelBase = nivel;
     trilha.push({ n: nivel, txt: "Prioridade base do assunto. " + porBase });
 
     var abertura = lerInputLocal($("abertura").value) || new Date();
@@ -695,7 +780,52 @@
     // Marca como "sem efeito" os pisos que ficaram abaixo do nível final
     trilha.forEach(function (x, i) { if (i > 0 && rank(x.n) < rank(nivel)) x.sem = true; });
 
-    return { tema: t, nomeAssunto: nomeBase, nivel: nivel, trilha: trilha, abertura: abertura, prazo: prazo(nivel, abertura) };
+    var primeira = prazo(nivel, abertura);
+
+    // Resolução
+    var trilhaRes = [];
+    var dias = diasResolucao(t, varSel);
+    trilhaRes.push({ n: nivelBase, txt: "Prazo do assunto: " + fmtDias(dias) + "." });
+    var teto = TETO_RESOLUCAO[nivel];
+    if (rank(nivel) > rank(nivelBase) && teto && teto < dias) {
+      trilhaRes.push({ n: nivel, txt: "A prioridade subiu para " + NIVEIS[nivel].nome + ": o prazo cai de " + fmtDias(dias) + " para " + fmtDias(teto) + "." });
+      dias = teto;
+    }
+    if (nivel === "critica" && dias > 1) dias = 1;
+    var jornada = cfg.fim - cfg.ini;
+    var resolucao = somarUteis(abertura, dias * jornada);
+    var alerta = null, antecipado = false;
+
+    var dataInf = t.data ? lerData($("data-informada").value) : null;
+    if (dataInf) {
+      var ref = t.data.limite === "aviso30" ? soma(dataInf, -30) : soma(dataInf, -1);
+      var x = ref;
+      while (!util(x)) x = soma(x, -1);
+      var limite = em(x, cfg.fim);
+      var oQue = t.data.limite === "aviso30"
+        ? "o aviso de férias precisa sair 30 dias antes do início (" + fmtData(dataInf) + ")"
+        : "o pedido precisa estar pronto antes de " + fmtData(dataInf);
+      if (limite <= abertura || limite < primeira) {
+        alerta = t.data.limite === "aviso30"
+          ? "O aviso de 30 dias da CLT já não será cumprido. Alinhe com o Head de RH antes de confirmar as férias."
+          : "A data informada não deixa folga: resolva o quanto antes e avise a pessoa se não for possível.";
+        trilhaRes.push({ n: nivel, txt: "Não há mais tempo antes da data limite: " + oQue + "." });
+      } else if (limite < resolucao) {
+        resolucao = limite; antecipado = true;
+        trilhaRes.push({ n: nivel, txt: "Antecipado para o último dia útil possível: " + oQue + "." });
+      }
+    }
+    if (resolucao < primeira) resolucao = primeira;
+
+    var regraRes = antecipado
+      ? (t.data.limite === "aviso30" ? "Antes do prazo de aviso de 30 dias das férias" : "Último dia útil antes da data informada")
+      : nivel === "planejada"
+      ? "Referência de " + fmtDias(dias) + ". Combine a data final na triagem."
+      : nivel === "critica" ? RESOLUCAO_NIVEL.critica : fmtDias(dias) + " a partir da abertura";
+
+    return { tema: t, nomeAssunto: nomeBase, nivel: nivel, trilha: trilha, abertura: abertura, prazo: primeira,
+      resolucao: resolucao, regraRes: regraRes, trilhaRes: trilhaRes, alertaRes: alerta,
+      entrega: ENTREGA[t.sub] || null };
   }
 
   var ultimo = null;
@@ -709,6 +839,11 @@
     $("res-nivel").textContent = N.nome;
     $("res-prazo").textContent = fmtDataHora(r.prazo);
     $("res-regra").textContent = N.regra;
+    $("res-resolucao").textContent = fmtDataHora(r.resolucao);
+    $("res-regra-resolucao").textContent = r.regraRes;
+    $("res-trilha-resolucao").innerHTML = r.trilhaRes.map(function (x) {
+      return "<li>" + pill(x.n) + "<span>" + esc(x.txt) + "</span></li>";
+    }).join("");
     $("res-portal").innerHTML = "Prioridade “" + esc(N.portal) + "”";
     atualizarContagem();
 
@@ -719,6 +854,8 @@
     }
     var dica = $("res-dica");
     var textos = [];
+    if (r.alertaRes) textos.push("<strong>Atenção:</strong> " + esc(r.alertaRes));
+    if (r.entrega) textos.push("<strong>Para dar como resolvido:</strong> " + esc(r.entrega));
     if (r.tema.dica) textos.push(esc(r.tema.dica));
     if (r.nivel === "planejada") textos.push("Na triagem, combine com a pessoa uma data de entrega e registre no chamado.");
     dica.hidden = !textos.length;
@@ -730,11 +867,15 @@
     $("copiado").hidden = true;
     $("copybox").hidden = true;
   }
-  function atualizarContagem() {
-    if (!ultimo) return;
-    var diff = ultimo.prazo - new Date(), el = $("res-contagem");
+  function contagem(el, alvo) {
+    var diff = alvo - new Date();
     el.classList.toggle("late", diff < 0);
     el.textContent = diff >= 0 ? "Faltam " + fmtDur(diff) : "Prazo vencido há " + fmtDur(diff);
+  }
+  function atualizarContagem() {
+    if (!ultimo) return;
+    contagem($("res-contagem"), ultimo.prazo);
+    contagem($("res-contagem-resolucao"), ultimo.resolucao);
   }
   function resumo() {
     var r = ultimo, N = NIVEIS[r.nivel], vinc = VINCULOS.filter(function (v) { return v.slug === estado.vinculo; })[0].nome;
@@ -744,6 +885,8 @@
       "Prioridade: " + N.nome + " (no portal: " + N.portal + ")\n" +
       "Aberto em: " + fmtDataHora(r.abertura) + "\n" +
       "Primeira resposta até: " + fmtDataHora(r.prazo) + " (" + N.regra.toLowerCase() + ")\n" +
+      "Resolução até: " + fmtDataHora(r.resolucao) + " (" + r.regraRes.charAt(0).toLowerCase() + r.regraRes.slice(1) + ")\n" +
+      (r.entrega ? "Entrega esperada: " + r.entrega + "\n" : "") +
       "Motivo:\n" + motivos;
   }
 
@@ -755,6 +898,10 @@
     if (t.data) p.push(t.data.regra === "programavel" ? "Início em até 30 dias: Normal · em até 7 dias: Alta" : t.data.label + " em até 7 dias: Alta");
     if (t.dica && !t.variantes && !t.data) p.push(t.dica);
     return p.length ? p.map(esc).join("<br>") : '<span class="cat">Só pelos agravantes</span>';
+  }
+  function resolucaoTabela(t) {
+    if (t.variantes) return t.variantes.opcoes.map(function (o) { return esc(o.nome) + ": " + fmtDias(diasResolucao(t, o)); }).join("<br>");
+    return fmtDias(diasResolucao(t, null)) + (t.data ? '<div class="cat">ou antes da data informada</div>' : "");
   }
   function montarFiltro() {
     var ops = [{ slug: "todos-os", nome: "Todos" }].concat(VINCULOS).concat([{ slug: "todos", nome: "Comuns a todos" }]);
@@ -773,15 +920,16 @@
     var nomes = { pj: "PJ", clt: "CLT", estagio: "Estágio", todos: "Comuns a PJ, CLT e Estágio" };
     var html = "", grupo = null;
     lista.forEach(function (t) {
-      if (t.v !== grupo) { grupo = t.v; html += '<tr class="group"><td colspan="5">' + nomes[t.v] + "</td></tr>"; }
+      if (t.v !== grupo) { grupo = t.v; html += '<tr class="group"><td colspan="6">' + nomes[t.v] + "</td></tr>"; }
       var base = t.variantes ? t.variantes.opcoes[0].nivel : t.base;
       html += "<tr><td><div class=\"sub\">" + esc(t.sub) + '</div><div class="cat">' + esc(t.cat) + "</div></td>" +
         "<td>" + pill(base) + (t.variantes ? '<div class="cat" style="margin-top:4px">varia</div>' : "") + "</td>" +
+        "<td>" + resolucaoTabela(t) + "</td>" +
         "<td>" + sobeQuando(t) + "</td>" +
         '<td class="why">' + esc(t.variantes ? t.variantes.opcoes[0].por : t.por) + "</td>" +
         '<td><button class="btn link" type="button" data-usar="' + t.id + '">Calcular</button></td></tr>';
     });
-    $("tabela").innerHTML = html || '<tr><td colspan="5">Nenhum assunto encontrado. Tente outra palavra.</td></tr>';
+    $("tabela").innerHTML = html || '<tr><td colspan="6">Nenhum assunto encontrado. Tente outra palavra.</td></tr>';
     $("contagem").textContent = lista.length + (lista.length === 1 ? " assunto" : " assuntos");
   }
 
@@ -789,7 +937,10 @@
   function montarRegras() {
     $("niveis").innerHTML = ORDEM.slice().reverse().map(function (n) {
       var N = NIVEIS[n];
-      return '<div class="panel level-card">' + pill(n) + '<p class="sla">' + esc(N.regra) + "</p><p>" + esc(N.desc) + "</p><p>No portal: <strong>" + esc(N.portal) + "</strong></p></div>";
+      return '<div class="panel level-card">' + pill(n) +
+        '<p class="sla-label">Primeira resposta</p><p class="sla">' + esc(N.regra) + "</p>" +
+        '<p class="sla-label">Resolução</p><p class="sla">' + esc(n === "planejada" || n === "critica" ? RESOLUCAO_NIVEL[n] : "Prazo do assunto" + (TETO_RESOLUCAO[n] ? ", no máximo " + fmtDias(TETO_RESOLUCAO[n]) + " quando a prioridade sobe" : "")) + "</p>" +
+        "<p>" + esc(N.desc) + "</p><p>No portal: <strong>" + esc(N.portal) + "</strong></p></div>";
     }).join("");
     $("cfg-ini").value = fmtMin(cfg.ini);
     $("cfg-fim").value = fmtMin(cfg.fim);
