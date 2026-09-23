@@ -1,0 +1,880 @@
+<title>Calculadora de SLA do RH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap">
+<style>
+  :root {
+    --bg: #f3f6fb;
+    --surface: #ffffff;
+    --surface-2: #f8fafd;
+    --ink: #14213d;
+    --muted: #5a6680;
+    --line: #dce3ee;
+    --accent: #16357d;
+    --accent-soft: #e6ecf8;
+    --on-accent: #ffffff;
+    --focus: #26a3d0;
+
+    --critica: #901845; --critica-soft: #f7eff2; --critica-line: #dbb5c3;
+    --alta: #9a6609;    --alta-soft: #fef2db;    --alta-line: #fde2b2;  --alta-dot: #f9a50f;
+    --normal: #06665e;  --normal-soft: #daf1ef;  --normal-line: #b0e2de; --normal-dot: #09a497;
+    --planejada: #17607f; --planejada-soft: #e2f2f9; --planejada-line: #b5dcec; --planejada-dot: #26a3d0;
+    --critica-dot: #901845;
+
+    --radius: 10px;
+    --display: "Sora", "Segoe UI", system-ui, sans-serif;
+    --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0d1424; --surface: #151f37; --surface-2: #111a2f; --ink: #e7ecf7; --muted: #9ba8c4;
+      --line: #27345a; --accent: #9db4f0; --accent-soft: #1d2a4d; --on-accent: #0d1424; --focus: #5cc3e8;
+      --critica: #f08db3; --critica-soft: #3a1426; --critica-line: #6a2743; --critica-dot: #e0548a;
+      --alta: #f7c863; --alta-soft: #36270a; --alta-line: #5f4712; --alta-dot: #f9a50f;
+      --normal: #62d6ca; --normal-soft: #0c3330; --normal-line: #17544f; --normal-dot: #1bbfae;
+      --planejada: #7ccbec; --planejada-soft: #0f2c3b; --planejada-line: #1f4d63; --planejada-dot: #26a3d0;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0d1424; --surface: #151f37; --surface-2: #111a2f; --ink: #e7ecf7; --muted: #9ba8c4;
+    --line: #27345a; --accent: #9db4f0; --accent-soft: #1d2a4d; --on-accent: #0d1424; --focus: #5cc3e8;
+    --critica: #f08db3; --critica-soft: #3a1426; --critica-line: #6a2743; --critica-dot: #e0548a;
+    --alta: #f7c863; --alta-soft: #36270a; --alta-line: #5f4712; --alta-dot: #f9a50f;
+    --normal: #62d6ca; --normal-soft: #0c3330; --normal-line: #17544f; --normal-dot: #1bbfae;
+    --planejada: #7ccbec; --planejada-soft: #0f2c3b; --planejada-line: #1f4d63; --planejada-dot: #26a3d0;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--body);
+    font-size: 15px; line-height: 1.5; padding: 0 16px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+  h1 { font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem); font-weight: 800; color: var(--accent); }
+  h2 { font-size: 1.15rem; font-weight: 700; }
+  h3 { font-size: 0.98rem; font-weight: 700; }
+  p { margin: 0; }
+  .lede { color: var(--muted); max-width: 64ch; margin-top: 6px; }
+  .eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+  .brandbar { display: flex; gap: 4px; margin-bottom: 12px; }
+  .brandbar span { width: 22px; height: 5px; border-radius: 3px; }
+
+  nav.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px; flex-wrap: wrap; }
+  nav.tabs button { border: 0; background: transparent; padding: 7px 14px; border-radius: 999px; font-weight: 600; color: var(--muted); cursor: pointer; }
+  nav.tabs button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 24px; margin-top: 24px; align-items: start; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .step { padding: 18px 20px; display: grid; gap: 12px; }
+  .step + .step { border-top: 1px solid var(--line); }
+  .step-head { display: flex; align-items: baseline; gap: 10px; }
+  .step-n { font-family: var(--display); font-weight: 800; color: var(--accent); font-size: 0.85rem; width: 22px; height: 22px; border-radius: 50%; background: var(--accent-soft); display: inline-grid; place-items: center; flex: none; }
+  .hint { color: var(--muted); font-size: 0.86rem; }
+
+  .seg { display: flex; flex-wrap: wrap; gap: 8px; }
+  .seg button { border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+  .seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+  .fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  label.f { display: grid; gap: 5px; font-weight: 600; font-size: 0.88rem; }
+  select, input[type="datetime-local"], input[type="date"], input[type="time"], input[type="search"] {
+    width: 100%; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 9px 11px; font-weight: 500; min-height: 40px;
+  }
+  .row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; }
+  .row > label.f { flex: 1 1 200px; }
+  .btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 9px 14px; font-weight: 600; cursor: pointer; min-height: 40px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn.link { border: 0; background: none; padding: 0; min-height: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+
+  .checks { display: grid; gap: 8px; }
+  .check { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+  .check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); }
+  .check strong { display: block; font-weight: 600; }
+  .check small { color: var(--muted); font-size: 0.82rem; }
+  .check:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .effect { font-size: 0.72rem; font-weight: 700; white-space: nowrap; padding: 2px 8px; border-radius: 999px; align-self: center; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 0.8rem; padding: 3px 10px; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+  .pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .lv-critica { color: var(--critica); background: var(--critica-soft); border-color: var(--critica-line); }
+  .lv-alta { color: var(--alta); background: var(--alta-soft); border-color: var(--alta-line); }
+  .lv-normal { color: var(--normal); background: var(--normal-soft); border-color: var(--normal-line); }
+  .lv-planejada { color: var(--planejada); background: var(--planejada-soft); border-color: var(--planejada-line); }
+
+  .result { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); overflow: hidden; }
+  @media (max-width: 900px) { .result { position: static; } }
+  .result-top { padding: 20px; border-bottom: 1px solid var(--line); display: grid; gap: 14px; }
+  .result-top[data-lv] { border-top: 6px solid var(--lvdot); }
+  .level-name { font-family: var(--display); font-size: 2rem; font-weight: 800; line-height: 1.1; color: var(--lvc); }
+  .deadline { font-family: var(--display); font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .countdown { font-weight: 600; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+  .countdown.late { color: var(--critica); }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 0.9rem; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; font-weight: 600; }
+  .result-body { padding: 18px 20px; display: grid; gap: 14px; }
+  .alert { border: 1px solid var(--critica-line); background: var(--critica-soft); color: var(--ink); border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; }
+  .alert strong { color: var(--critica); }
+  .note { border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 12px 14px; font-size: 0.9rem; }
+  ol.trail { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  ol.trail li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: 0.9rem; }
+  ol.trail li .pill { font-size: 0.7rem; padding: 1px 8px; }
+  ol.trail li.muted { color: var(--muted); }
+  .copyrow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .toast { font-size: 0.85rem; color: var(--normal); font-weight: 600; }
+  textarea.copybox { width: 100%; min-height: 110px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); padding: 10px; font-size: 0.85rem; }
+
+  /* Tabela */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-top: 24px; }
+  .toolbar label.f { flex: 1 1 260px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; }
+  .table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); background: var(--surface-2); position: sticky; top: 0; }
+  tr.group td { background: var(--accent-soft); color: var(--accent); font-weight: 700; font-family: var(--display); font-size: 0.85rem; }
+  td .sub { font-weight: 600; }
+  td .cat { color: var(--muted); font-size: 0.8rem; }
+  td.why { color: var(--muted); max-width: 46ch; }
+  .tags { display: flex; gap: 4px; flex-wrap: wrap; }
+  .tag { font-size: 0.72rem; font-weight: 700; padding: 1px 7px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); }
+  .count { color: var(--muted); font-size: 0.85rem; margin-top: 10px; }
+
+  /* Regras */
+  .rules { display: grid; gap: 24px; margin-top: 24px; }
+  .levels { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+  .level-card { padding: 16px; display: grid; gap: 8px; align-content: start; }
+  .level-card .sla { font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+  .level-card p { font-size: 0.88rem; color: var(--muted); }
+  .section { padding: 20px; display: grid; gap: 12px; }
+  .section ul, .section ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 80ch; }
+  .crit-list { list-style: none; padding: 0 !important; }
+  .crit-list li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center; }
+  .crit-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 0.8rem; font-family: var(--display); }
+  .settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  .switch { display: flex; gap: 8px; align-items: center; font-weight: 600; font-size: 0.88rem; min-height: 40px; }
+  .switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .hol { font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  footer { margin-top: 32px; color: var(--muted); font-size: 0.82rem; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brandbar" aria-hidden="true">
+        <span style="background:#901845"></span><span style="background:#f9a50f"></span><span style="background:#09a497"></span><span style="background:#26a3d0"></span><span style="background:#ec562a"></span>
+      </div>
+      <h1>Calculadora de SLA do RH</h1>
+      <p class="lede">Escolha o assunto do chamado, responda às perguntas e veja a prioridade e o prazo da primeira resposta.</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Seções">
+      <button role="tab" id="tab-calc" aria-selected="true" data-tab="calc">Calculadora</button>
+      <button role="tab" id="tab-tabela" aria-selected="false" data-tab="tabela">Assuntos</button>
+      <button role="tab" id="tab-regras" aria-selected="false" data-tab="regras">Regras</button>
+    </nav>
+  </header>
+
+  <!-- CALCULADORA -->
+  <section id="view-calc" role="tabpanel" aria-labelledby="tab-calc">
+    <div class="grid">
+      <div class="panel">
+        <div class="step">
+          <div class="step-head"><span class="step-n">1</span><h2>Quem abriu o chamado</h2></div>
+          <div class="seg" id="vinculos"></div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-n">2</span><h2>Assunto do chamado</h2></div>
+          <p class="hint">Use a mesma categoria e subcategoria que aparecem no chamado do portal.</p>
+          <div class="fields">
+            <label class="f">Categoria<select id="categoria"></select></label>
+            <label class="f">Assunto<select id="assunto"></select></label>
+          </div>
+          <label class="f" id="variante-wrap" hidden><span id="variante-label">Detalhe</span><select id="variante"></select></label>
+          <div class="row" id="data-wrap" hidden>
+            <label class="f"><span id="data-label">Data informada</span><input type="date" id="data-informada"></label>
+            <button class="btn" type="button" id="limpar-data">Limpar data</button>
+          </div>
+          <p class="hint" id="data-hint" hidden></p>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-n">3</span><h2>Leia o chamado e marque o que for verdade</h2></div>
+          <p class="hint">Cada item pode subir a prioridade. Nenhum item baixa a prioridade. Na dúvida entre dois níveis, escolha o mais alto e explique o motivo no chamado.</p>
+          <div class="checks" id="agravantes"></div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-n">4</span><h2>Quando o chamado foi aberto</h2></div>
+          <div class="row">
+            <label class="f">Data e hora de abertura<input type="datetime-local" id="abertura"></label>
+            <button class="btn" type="button" id="agora">Agora</button>
+          </div>
+          <p class="hint" id="expediente-hint"></p>
+        </div>
+      </div>
+
+      <aside class="panel result" aria-live="polite">
+        <div class="result-top" id="res-top">
+          <div>
+            <p class="eyebrow">Prioridade</p>
+            <p class="level-name" id="res-nivel">—</p>
+          </div>
+          <div>
+            <p class="eyebrow">Primeira resposta até</p>
+            <p class="deadline" id="res-prazo">—</p>
+            <p class="countdown" id="res-contagem"></p>
+          </div>
+          <dl class="kv">
+            <dt>Regra</dt><dd id="res-regra">—</dd>
+            <dt>No portal, marque</dt><dd id="res-portal">—</dd>
+          </dl>
+        </div>
+        <div class="result-body">
+          <div class="alert" id="res-escalar" hidden></div>
+          <div class="note" id="res-dica" hidden></div>
+          <div>
+            <p class="eyebrow" style="margin-bottom:8px">Por que esse nível</p>
+            <ol class="trail" id="res-trilha"></ol>
+          </div>
+          <div class="copyrow">
+            <button class="btn primary" type="button" id="copiar">Copiar resumo para o chamado</button>
+            <span class="toast" id="copiado" hidden>Resumo copiado</span>
+          </div>
+          <textarea class="copybox" id="copybox" readonly hidden aria-label="Resumo para copiar"></textarea>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- TABELA -->
+  <section id="view-tabela" role="tabpanel" aria-labelledby="tab-tabela" hidden>
+    <div class="toolbar">
+      <label class="f">Buscar assunto<input type="search" id="busca" placeholder="Ex.: pix, férias, distrato"></label>
+      <div class="seg" id="filtro-vinculo"></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Assunto</th><th>Prioridade base</th><th>Sobe quando</th><th>Por que</th><th></th></tr></thead>
+        <tbody id="tabela"></tbody>
+      </table>
+    </div>
+    <p class="count" id="contagem"></p>
+  </section>
+
+  <!-- REGRAS -->
+  <section id="view-regras" role="tabpanel" aria-labelledby="tab-regras" hidden>
+    <div class="rules">
+      <div>
+        <h2>Os quatro níveis</h2>
+        <p class="lede">Prazos da proposta do Head de RH. O prazo é da primeira resposta, não da solução. A primeira resposta confirma o recebimento, diz o próximo passo e informa quando a pessoa terá retorno.</p>
+        <div class="levels" id="niveis" style="margin-top:14px"></div>
+      </div>
+
+      <div class="panel section">
+        <h2>Como a calculadora decide</h2>
+        <ol>
+          <li><strong>Prioridade base do assunto.</strong> Cada assunto do portal tem um nível padrão, definido pelos critérios abaixo. Veja a lista completa em “Assuntos”.</li>
+          <li><strong>Data informada no chamado.</strong> Em assuntos com data (início de contrato, férias, vigência, retorno), a prioridade sobe quando a data está próxima: faltam 7 dias corridos ou menos, ou a data já passou → <em>Alta</em>. Em férias e descanso remunerado, faltam 30 dias ou menos → pelo menos <em>Normal</em> (a CLT exige aviso de férias com 30 dias).</li>
+          <li><strong>Agravantes que definem um nível mínimo.</strong> Risco à segurança de pessoas ou pacientes, ou risco legal, de dados ou de fraude → <em>Crítica</em>. Dinheiro atrasado, pessoa impedida de trabalhar ou prazo externo próximo → pelo menos <em>Alta</em>.</li>
+          <li><strong>Agravantes que sobem um nível.</strong> Se o problema atinge várias pessoas, a prioridade sobe um nível (no mínimo <em>Alta</em>). Se a pessoa já reclamou do mesmo assunto sem solução, a prioridade sobe um nível, até <em>Alta</em>.</li>
+          <li><strong>Vale o nível mais alto.</strong> Nenhuma resposta baixa a prioridade.</li>
+        </ol>
+      </div>
+
+      <div class="panel section">
+        <h2>Ordem de importância</h2>
+        <p class="hint">Quando dois chamados disputam o mesmo horário, atenda primeiro o que estiver mais alto nesta lista.</p>
+        <ul class="crit-list">
+          <li><span class="crit-n" style="background:#901845">1</span>Segurança de pessoas e pacientes</li>
+          <li><span class="crit-n" style="background:#901845">2</span>Risco legal, contratual, financeiro ou de dados</li>
+          <li><span class="crit-n" style="background:#f9a50f">3</span>Folha, repasses e compromissos com fechamento</li>
+          <li><span class="crit-n" style="background:#f9a50f">4</span>Continuidade da operação e cobertura assistencial</li>
+          <li><span class="crit-n" style="background:#09a497">5</span>Experiência do profissional e qualidade do atendimento</li>
+          <li><span class="crit-n" style="background:#09a497">6</span>Projetos de estruturação e melhoria</li>
+        </ul>
+      </div>
+
+      <div class="panel section">
+        <h2>Como o prazo é contado</h2>
+        <ul>
+          <li><strong>Crítica:</strong> 2 horas úteis a partir da abertura. Escale na hora, mesmo fora do expediente.</li>
+          <li><strong>Alta:</strong> até o fim do expediente do dia. Se faltarem menos de 2 horas úteis no dia (ou o chamado chegar fora do expediente), o prazo passa para as 12h do próximo dia útil.</li>
+          <li><strong>Normal:</strong> 1 dia útil de expediente a partir da abertura. Exemplo: aberto na terça às 15h, vence na quarta às 15h.</li>
+          <li><strong>Planejada:</strong> triagem em até 2 dias úteis. Na triagem, combine uma data de entrega com a pessoa e registre no chamado.</li>
+          <li>Não contam sábados, domingos e feriados. O ajuste abaixo fica salvo apenas neste navegador.</li>
+        </ul>
+        <div class="settings">
+          <label class="f">Início do expediente<input type="time" id="cfg-ini"></label>
+          <label class="f">Fim do expediente<input type="time" id="cfg-fim"></label>
+          <label class="switch"><input type="checkbox" id="cfg-sp"> Contar feriados de São Paulo e Carnaval</label>
+        </div>
+        <p class="hol" id="feriados"></p>
+      </div>
+    </div>
+  </section>
+
+  <footer>Os assuntos são os mesmos do portal de atendimento do RH (PJ, CLT e Estágio). Quando um assunto novo for criado no portal, ele também precisa ser incluído aqui.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Níveis ---------- */
+  var ORDEM = ["planejada", "normal", "alta", "critica"];
+  var NIVEIS = {
+    critica:   { nome: "Crítica",   portal: "Urgente", regra: "Até 2 horas úteis e escalar na hora", desc: "Segurança, vazamento de dados, erro que atinge várias pessoas, fraude, notificação oficial." },
+    alta:      { nome: "Alta",      portal: "Alta",    regra: "No mesmo dia útil", desc: "Pagamento em risco, admissão ou desligamento próximo, acesso bloqueado, prazo legal." },
+    normal:    { nome: "Normal",    portal: "Normal",  regra: "Em até 1 dia útil", desc: "Benefícios, documentos, ponto, dúvidas de folha, cadastro." },
+    planejada: { nome: "Planejada", portal: "Baixa",   regra: "Triagem em até 2 dias úteis e prazo combinado", desc: "Relatórios, campanhas, políticas, melhorias, projetos e pedidos programáveis." }
+  };
+  function rank(n) { return ORDEM.indexOf(n); }
+  function maxN(a, b) { return rank(a) >= rank(b) ? a : b; }
+  function up(n) { return ORDEM[Math.min(rank(n) + 1, ORDEM.length - 1)]; }
+
+  /* ---------- Catálogo (espelha rh-atendimento/src/lib/catalogo.ts) ---------- */
+  var DICA_PIX = "Antes de trocar, confirme o pedido com a pessoa por outro canal (telefone do cadastro). Se ela disser que não pediu a troca, é suspeita de fraude: marque o agravante de risco legal (Crítica).";
+  var POR_PIX = "Muda a conta que recebe o pagamento. Há risco de fraude e de pagamento na conta errada (critério 2).";
+  var POR_NAO_RECEBIDO = "Pagamento em risco: a pessoa está sem receber (critério 3).";
+  var POR_DIVERG = "A pessoa recebeu, mas o valor precisa ser conferido. É dúvida de folha (critério 3).";
+  var DICA_DIVERG = "Se faltou uma parte grande do valor, marque “dinheiro atrasado”. Se várias pessoas relatam a mesma diferença, marque “atinge várias pessoas”.";
+  var DICA_VT = "Se a pessoa está sem vale-transporte para chegar ao trabalho, marque “impedida de trabalhar”.";
+
+  var TEMAS = [
+    // Comuns aos três vínculos
+    { v: "todos", cat: "Acesso ao AnClinic", sub: "Solicitar acesso ao AnClinic", base: "normal",
+      por: "Cadastro de rotina, mas é necessário para registrar os atendimentos (critério 4).",
+      data: { label: "Data de início do contrato", regra: "padrao" },
+      dica: "Se o início é em 7 dias ou menos, a pessoa começaria a atender sem acesso ao sistema: a prioridade sobe para Alta." },
+    { v: "todos", cat: "Acesso ao AnClinic", sub: "Problema de acesso ao AnClinic", base: "alta",
+      por: "Com o acesso bloqueado, o profissional não registra sessões nem evoluções. Afeta a assistência (critério 4)." },
+    { v: "todos", cat: "Outros assuntos", sub: "Dúvida geral sobre RH", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "todos", cat: "Outros assuntos", sub: "Declaração ou documento", base: "normal",
+      por: "Documento de rotina (declaração de vínculo, comprovante de renda).",
+      data: { label: "Data em que a pessoa precisa do documento", regra: "padrao" } },
+    { v: "todos", cat: "Outros assuntos", sub: "Atualização de dados cadastrais", base: "normal",
+      por: "Cadastro de rotina.",
+      dica: "A inclusão de dependente afeta o IR e o plano de saúde. Veja se não há um prazo junto." },
+    { v: "todos", cat: "Outros assuntos", sub: "Sugestão, elogio ou reclamação", base: "normal",
+      variantes: { label: "Tipo de mensagem", opcoes: [
+        { nome: "Reclamação", nivel: "normal", por: "Uma reclamação pede retorno rápido para não gerar mais desgaste (critério 5)." },
+        { nome: "Sugestão ou elogio", nivel: "planejada", por: "Melhoria: entra no fluxo de projetos (critério 6)." }
+      ] },
+      dica: "Leia com atenção. Reclamação que relata assédio, discriminação, violência ou risco a paciente é Crítica: marque o agravante de segurança." },
+    { v: "todos", cat: "Outros assuntos", sub: "Outro assunto", base: "normal",
+      por: "Sem tema definido: responda em 1 dia útil, entenda o pedido e direcione para a pessoa certa.",
+      dica: "Depois de ler, use os agravantes para reclassificar. Assuntos graves costumam chegar por aqui." },
+
+    // PJ
+    { v: "pj", cat: "Contratos", sub: "Assinatura de novo contrato", base: "alta",
+      por: "Sem contrato assinado, o profissional atende e recebe sem cobertura contratual. Há risco legal e de pagamento (critério 2)." },
+    { v: "pj", cat: "Contratos", sub: "Aditivo ou renovação", base: "normal",
+      por: "Rotina contratual, com prazo de vigência.", data: { label: "Data de início da vigência", regra: "padrao" } },
+    { v: "pj", cat: "Contratos", sub: "Segunda via do contrato", base: "normal", por: "Pedido de documento." },
+    { v: "pj", cat: "Contratos", sub: "Dúvidas sobre o contrato", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "pj", cat: "Distratos", sub: "Solicitar distrato", base: "alta",
+      por: "Desligamento próximo: é preciso cobrir os pacientes, fazer o último pagamento e retirar os acessos (critérios 2 e 4).",
+      dica: "Avise a coordenação da unidade no mesmo dia para planejar a cobertura dos pacientes." },
+    { v: "pj", cat: "Distratos", sub: "Dúvidas sobre distrato", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "pj", cat: "Distratos", sub: "Documentos do distrato", base: "normal", por: "Pedido de documento." },
+    { v: "pj", cat: "Mudança de chave Pix", sub: "Alterar minha chave Pix", base: "alta", por: POR_PIX, dica: DICA_PIX },
+    { v: "pj", cat: "Pagamentos", sub: "Envio de nota fiscal", base: "normal",
+      por: "Recebimento de documento que libera o pagamento.",
+      dica: "Se a nota chegou depois do prazo e o pagamento do mês depende dela, marque “dinheiro atrasado ou fechamento travado”." },
+    { v: "pj", cat: "Pagamentos", sub: "Pagamento não recebido", base: "alta", por: POR_NAO_RECEBIDO },
+    { v: "pj", cat: "Pagamentos", sub: "Divergência de valor", base: "normal", por: POR_DIVERG, dica: DICA_DIVERG },
+    { v: "pj", cat: "Pagamentos", sub: "Dúvidas sobre pagamento", base: "normal", por: "Dúvida de folha (critério 3)." },
+
+    // CLT
+    { v: "clt", cat: "Afastamento", sub: "Comunicar afastamento", base: "alta",
+      variantes: { label: "Motivo informado", opcoes: [
+        { nome: "Doença", nivel: "alta", por: "A ausência afeta a agenda de pacientes e a folha. Mais de 15 dias exige encaminhamento ao INSS (critérios 3 e 4)." },
+        { nome: "Acidente de trabalho ou de trajeto", nivel: "critica", por: "A CAT deve ser emitida até o primeiro dia útil seguinte (Lei 8.213, art. 22), e há risco à pessoa (critérios 1 e 2)." },
+        { nome: "Licença maternidade", nivel: "alta", por: "Afastamento longo: exige cobertura dos pacientes, ajuste na folha e registro no eSocial (critérios 3 e 4)." },
+        { nome: "Licença paternidade", nivel: "normal", por: "Afastamento curto e previsível: registre e ajuste o ponto." },
+        { nome: "Outro", nivel: "alta", por: "Ausência que afeta a agenda de pacientes e a folha (critérios 3 e 4)." }
+      ] },
+      dica: "Se o acidente não tiver relação com o trabalho nem com o trajeto, escolha “Doença”." },
+    { v: "clt", cat: "Afastamento", sub: "Retorno de afastamento", base: "normal",
+      por: "Rotina, mas depende de exame de retorno quando o afastamento passa de 30 dias (NR-7).",
+      data: { label: "Data de retorno", regra: "padrao" },
+      dica: "Sem o exame de retorno (ASO), a pessoa não pode voltar a atender." },
+    { v: "clt", cat: "Afastamento", sub: "Dúvidas sobre afastamento", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "clt", cat: "Férias", sub: "Solicitar férias", base: "planejada",
+      por: "Pedido programável. A CLT exige aviso com 30 dias de antecedência e pagamento até 2 dias antes do início (arts. 135 e 145).",
+      data: { label: "Data de início das férias", regra: "programavel" } },
+    { v: "clt", cat: "Férias", sub: "Cancelar ou reprogramar férias", base: "normal",
+      por: "Pode envolver devolução de pagamento já feito e ajuste na escala.",
+      data: { label: "Início do período já programado", regra: "padrao" } },
+    { v: "clt", cat: "Férias", sub: "Dúvidas sobre férias", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "clt", cat: "Auxílio creche", sub: "Solicitar auxílio creche", base: "normal", por: "Pedido de benefício." },
+    { v: "clt", cat: "Auxílio creche", sub: "Envio de comprovante mensal", base: "normal",
+      por: "Recebimento de documento que libera o reembolso.",
+      dica: "Se o reembolso do mês depende do comprovante e o fechamento está perto, marque o agravante de fechamento." },
+    { v: "clt", cat: "Auxílio creche", sub: "Dúvidas sobre auxílio creche", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "clt", cat: "Ponto eletrônico", sub: "Envio de atestado", base: "normal",
+      variantes: { label: "Duração do atestado", opcoes: [
+        { nome: "Até 15 dias", nivel: "normal", por: "Rotina de ponto: registre e informe o gestor." },
+        { nome: "Mais de 15 dias", nivel: "alta", por: "Vira afastamento: exige encaminhamento ao INSS e cobertura dos pacientes (critérios 2 e 4)." }
+      ] },
+      dica: "Se o atestado for de acidente de trabalho, trate como Crítica (emissão da CAT)." },
+    { v: "clt", cat: "Ponto eletrônico", sub: "Ajuste de marcação de ponto", base: "normal",
+      por: "Rotina de ponto.",
+      dica: "Perto do fechamento da folha, marque o agravante de fechamento." },
+    { v: "clt", cat: "Ponto eletrônico", sub: "Banco de horas", base: "normal", por: "Dúvida de ponto." },
+    { v: "clt", cat: "Ponto eletrônico", sub: "Acesso ao sistema de ponto", base: "alta",
+      por: "Sem acesso, a jornada fica sem registro. Há risco trabalhista e de erro na folha (critério 2)." },
+    { v: "clt", cat: "Benefícios", sub: "Mudança de chave Pix", base: "alta", por: POR_PIX, dica: DICA_PIX },
+    { v: "clt", cat: "Benefícios", sub: "Plano de saúde / odontológico", base: "normal",
+      variantes: { label: "Tipo de pedido", opcoes: [
+        { nome: "Inclusão ou exclusão de dependente", nivel: "normal", por: "Rotina de benefício." },
+        { nome: "Carteirinha para uso imediato", nivel: "alta", por: "A pessoa precisa de atendimento de saúde e está sem cobertura (critério 1)." }
+      ] },
+      dica: "O recém-nascido deve ser incluído em até 30 dias do nascimento para evitar carência." },
+    { v: "clt", cat: "Benefícios", sub: "Vale transporte / alimentação", base: "normal", por: "Rotina de benefício.", dica: DICA_VT },
+    { v: "clt", cat: "Benefícios", sub: "Dúvidas sobre benefícios", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "clt", cat: "Pagamento", sub: "Holerite / demonstrativo", base: "normal", por: "Pedido de documento de folha." },
+    { v: "clt", cat: "Pagamento", sub: "Pagamento não recebido", base: "alta", por: POR_NAO_RECEBIDO },
+    { v: "clt", cat: "Pagamento", sub: "Divergência de valor ou desconto", base: "normal", por: POR_DIVERG, dica: DICA_DIVERG },
+    { v: "clt", cat: "Pagamento", sub: "Dúvidas sobre pagamento", base: "normal", por: "Dúvida de folha (critério 3)." },
+
+    // Estágio
+    { v: "estagio", cat: "Benefícios", sub: "Mudança de chave Pix", base: "alta", por: POR_PIX, dica: DICA_PIX },
+    { v: "estagio", cat: "Benefícios", sub: "Vale transporte / alimentação", base: "normal", por: "Rotina de benefício.", dica: DICA_VT },
+    { v: "estagio", cat: "Benefícios", sub: "Dúvidas sobre benefícios", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "estagio", cat: "Bolsa Auxílio", sub: "Bolsa não recebida", base: "alta", por: POR_NAO_RECEBIDO },
+    { v: "estagio", cat: "Bolsa Auxílio", sub: "Divergência de valor", base: "normal", por: POR_DIVERG, dica: DICA_DIVERG },
+    { v: "estagio", cat: "Bolsa Auxílio", sub: "Comprovante ou recibo da bolsa", base: "normal", por: "Pedido de documento." },
+    { v: "estagio", cat: "Bolsa Auxílio", sub: "Dúvidas sobre a bolsa auxílio", base: "normal", por: "Dúvida de folha (critério 3)." },
+    { v: "estagio", cat: "Descanso Remunerado", sub: "Solicitar descanso remunerado", base: "planejada",
+      por: "Pedido programável, depois do aceite do gestor.",
+      data: { label: "Data de início do descanso", regra: "programavel" } },
+    { v: "estagio", cat: "Descanso Remunerado", sub: "Cancelar ou reprogramar", base: "normal",
+      por: "Muda um período já combinado com o gestor.",
+      data: { label: "Início do período já programado", regra: "padrao" } },
+    { v: "estagio", cat: "Descanso Remunerado", sub: "Dúvidas sobre descanso remunerado", base: "normal", por: "Dúvida sem impacto imediato." },
+    { v: "estagio", cat: "Contrato", sub: "Assinatura do termo de compromisso", base: "alta",
+      por: "Estágio sem termo de compromisso assinado pode ser considerado vínculo de emprego (Lei 11.788, art. 3º). É risco legal (critério 2)." },
+    { v: "estagio", cat: "Contrato", sub: "Renovação ou aditivo", base: "normal",
+      por: "Rotina contratual, com prazo de vigência.",
+      data: { label: "Data a partir da qual vale", regra: "padrao" },
+      dica: "Com o termo vencido e sem aditivo, o estágio fica irregular." },
+    { v: "estagio", cat: "Contrato", sub: "Segunda via do termo", base: "normal", por: "Pedido de documento." },
+    { v: "estagio", cat: "Contrato", sub: "Encerramento do estágio", base: "alta",
+      por: "Desligamento próximo: termo de realização, recesso proporcional e retirada dos acessos (critérios 2 e 4).",
+      dica: "Avise o supervisor do estágio e a coordenação da unidade no mesmo dia." },
+    { v: "estagio", cat: "Contrato", sub: "Dúvidas sobre o contrato", base: "normal", por: "Dúvida sem impacto imediato." }
+  ];
+  TEMAS.forEach(function (t, i) { t.id = i; });
+
+  var VINCULOS = [
+    { slug: "pj", nome: "PJ" }, { slug: "clt", nome: "CLT" }, { slug: "estagio", nome: "Estágio" }
+  ];
+  var ORDEM_VINC = { pj: 0, clt: 1, estagio: 2, todos: 3 };
+
+  /* ---------- Agravantes ---------- */
+  var AGRAVANTES = [
+    { id: "seg", titulo: "Há risco à segurança de alguém", ajuda: "Assédio, violência, ameaça, acidente, crise emocional ou risco a paciente.", efeito: "critica", rotulo: "Crítica" },
+    { id: "legal", titulo: "Há risco legal, de dados ou de fraude", ajuda: "Vazamento de dados, suspeita de golpe ou fraude, notificação oficial (Ministério do Trabalho, sindicato, Justiça, INSS) ou fiscalização.", efeito: "critica", rotulo: "Crítica" },
+    { id: "dinheiro", titulo: "O dinheiro está atrasado ou o fechamento está travado", ajuda: "Pagamento, bolsa ou repasse já passou da data, ou o pedido impede fechar a folha ou os repasses deste mês.", efeito: "alta", rotulo: "Mínimo Alta" },
+    { id: "impedido", titulo: "A pessoa está impedida de trabalhar ou de atender pacientes", ajuda: "Sem acesso a sistema, sem termo ou contrato para começar, sem transporte, ou pacientes sem cobertura.", efeito: "alta", rotulo: "Mínimo Alta" },
+    { id: "prazo", titulo: "Há um prazo legal ou externo em 7 dias ou menos", ajuda: "Banco, escola, INSS, conselho profissional, eSocial ou outro prazo informado no chamado.", efeito: "alta", rotulo: "Mínimo Alta" },
+    { id: "coletivo", titulo: "O problema atinge várias pessoas", ajuda: "Exemplo: a folha de uma unidade inteira ou um sistema fora do ar para todos.", efeito: "sobe", rotulo: "+1 nível" },
+    { id: "reincidente", titulo: "A pessoa já reclamou deste assunto sem solução", ajuda: "Segundo chamado sobre o mesmo problema ou reclamação de demora.", efeito: "sobe-ate-alta", rotulo: "+1 nível, até Alta" }
+  ];
+
+  /* ---------- Expediente e feriados ---------- */
+  var cfg = { ini: 8 * 60, fim: 18 * 60, sp: true };
+  try {
+    var salvo = JSON.parse(localStorage.getItem("sla-rh-cfg") || "null");
+    if (salvo && typeof salvo.ini === "number" && typeof salvo.fim === "number" && salvo.fim > salvo.ini) cfg = salvo;
+  } catch (e) {}
+  function salvarCfg() { try { localStorage.setItem("sla-rh-cfg", JSON.stringify(cfg)); } catch (e) {} }
+
+  function pascoa(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4,
+        f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30,
+        i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451),
+        mes = Math.floor((h + l - 7 * m + 114) / 31), dia = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, mes - 1, dia);
+  }
+  function chave(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function soma(d, dias) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + dias); }
+  var cacheFeriados = {};
+  function feriados(y) {
+    var k = y + (cfg.sp ? "sp" : "");
+    if (cacheFeriados[k]) return cacheFeriados[k];
+    var p = pascoa(y), lista = [
+      [new Date(y, 0, 1), "Confraternização"], [soma(p, -2), "Sexta-feira Santa"], [new Date(y, 3, 21), "Tiradentes"],
+      [new Date(y, 4, 1), "Dia do Trabalho"], [new Date(y, 8, 7), "Independência"], [new Date(y, 9, 12), "N. Sra. Aparecida"],
+      [new Date(y, 10, 2), "Finados"], [new Date(y, 10, 15), "Proclamação da República"], [new Date(y, 10, 20), "Consciência Negra"],
+      [new Date(y, 11, 25), "Natal"]
+    ];
+    if (cfg.sp) lista.push(
+      [new Date(y, 0, 25), "Aniversário de São Paulo"], [soma(p, -48), "Carnaval (segunda)"], [soma(p, -47), "Carnaval (terça)"],
+      [soma(p, 60), "Corpus Christi"], [new Date(y, 6, 9), "Revolução Constitucionalista"]
+    );
+    var mapa = {};
+    lista.forEach(function (x) { mapa[chave(x[0])] = x[1]; });
+    cacheFeriados[k] = { mapa: mapa, lista: lista.sort(function (a, b) { return a[0] - b[0]; }) };
+    return cacheFeriados[k];
+  }
+  function util(d) { var w = d.getDay(); return w !== 0 && w !== 6 && !feriados(d.getFullYear()).mapa[chave(d)]; }
+  function minDoDia(d) { return d.getHours() * 60 + d.getMinutes(); }
+  function em(d, min) { return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, min); }
+  function proximoInicio(d) { var x = soma(d, 1); while (!util(x)) x = soma(x, 1); return em(x, cfg.ini); }
+  function normalizar(d) {
+    if (!util(d)) return proximoInicio(d);
+    var m = minDoDia(d);
+    if (m < cfg.ini) return em(d, cfg.ini);
+    if (m >= cfg.fim) return proximoInicio(d);
+    return d;
+  }
+  function somarUteis(d, min) {
+    var s = normalizar(d);
+    for (var guarda = 0; guarda < 400; guarda++) {
+      var resta = cfg.fim - minDoDia(s);
+      if (min <= resta) return new Date(s.getTime() + min * 60000);
+      min -= resta;
+      s = proximoInicio(s);
+    }
+    return s;
+  }
+  function prazo(nivel, abertura) {
+    var jornada = cfg.fim - cfg.ini;
+    if (nivel === "critica") return somarUteis(abertura, 120);
+    if (nivel === "normal") return somarUteis(abertura, jornada);
+    if (nivel === "planejada") return somarUteis(abertura, 2 * jornada);
+    var s = normalizar(abertura);
+    if (cfg.fim - minDoDia(s) >= 120) return em(s, cfg.fim);
+    return em(proximoInicio(s), Math.min(cfg.ini + 240, cfg.fim));
+  }
+
+  /* ---------- Formatação ---------- */
+  var DIAS = ["dom.", "seg.", "ter.", "qua.", "qui.", "sex.", "sáb."];
+  function dois(n) { return String(n).padStart(2, "0"); }
+  function fmtData(d) { return DIAS[d.getDay()] + " " + dois(d.getDate()) + "/" + dois(d.getMonth() + 1) + "/" + d.getFullYear(); }
+  function fmtDataHora(d) { return fmtData(d) + " às " + dois(d.getHours()) + ":" + dois(d.getMinutes()); }
+  function fmtMin(m) { return dois(Math.floor(m / 60)) + ":" + dois(m % 60); }
+  function fmtDur(ms) {
+    var min = Math.round(Math.abs(ms) / 60000), d = Math.floor(min / 1440), h = Math.floor((min % 1440) / 60), m = min % 60, p = [];
+    if (d) p.push(d + (d === 1 ? " dia" : " dias"));
+    if (h) p.push(h + "h");
+    if (!d && (m || !h)) p.push(m + "min");
+    return p.join(" ");
+  }
+  function paraInputLocal(d) { return d.getFullYear() + "-" + dois(d.getMonth() + 1) + "-" + dois(d.getDate()) + "T" + dois(d.getHours()) + ":" + dois(d.getMinutes()); }
+  function lerInputLocal(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || "");
+    return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null;
+  }
+  function lerData(v) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || "");
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null;
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function pill(n, txt) { return '<span class="pill lv-' + n + '">' + esc(txt || NIVEIS[n].nome) + "</span>"; }
+
+  /* ---------- Estado ---------- */
+  var $ = function (id) { return document.getElementById(id); };
+  var estado = { vinculo: "clt", temaId: null };
+
+  function temasDo(v) { return TEMAS.filter(function (t) { return t.v === v || t.v === "todos"; }); }
+  function categoriasDo(v) {
+    var vistas = [];
+    temasDo(v).forEach(function (t) { if (vistas.indexOf(t.cat) < 0) vistas.push(t.cat); });
+    return vistas;
+  }
+
+  function montarVinculos() {
+    $("vinculos").innerHTML = VINCULOS.map(function (v) {
+      return '<button type="button" data-v="' + v.slug + '" aria-pressed="' + (v.slug === estado.vinculo) + '">' + v.nome + "</button>";
+    }).join("");
+  }
+  function montarCategorias(catAtual) {
+    var cats = categoriasDo(estado.vinculo);
+    if (cats.indexOf(catAtual) < 0) catAtual = cats[0];
+    $("categoria").innerHTML = cats.map(function (c) { return "<option" + (c === catAtual ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("");
+    return catAtual;
+  }
+  function montarAssuntos(cat, temaId) {
+    var lista = temasDo(estado.vinculo).filter(function (t) { return t.cat === cat; });
+    if (!lista.some(function (t) { return t.id === temaId; })) temaId = lista[0].id;
+    $("assunto").innerHTML = lista.map(function (t) {
+      return '<option value="' + t.id + '"' + (t.id === temaId ? " selected" : "") + ">" + esc(t.sub) + "</option>";
+    }).join("");
+    estado.temaId = temaId;
+    montarDetalhes();
+  }
+  function montarDetalhes() {
+    var t = TEMAS[estado.temaId];
+    $("variante-wrap").hidden = !t.variantes;
+    if (t.variantes) {
+      $("variante-label").textContent = t.variantes.label;
+      $("variante").innerHTML = t.variantes.opcoes.map(function (o, i) {
+        return '<option value="' + i + '">' + esc(o.nome) + " · " + NIVEIS[o.nivel].nome + "</option>";
+      }).join("");
+    }
+    $("data-wrap").hidden = !t.data;
+    $("data-hint").hidden = !t.data;
+    $("data-informada").value = "";
+    if (t.data) {
+      $("data-label").textContent = t.data.label + " (se o chamado informar)";
+      $("data-hint").textContent = t.data.regra === "programavel"
+        ? "Faltando 30 dias ou menos, sobe para Normal. Faltando 7 dias ou menos, ou com a data já passada, sobe para Alta."
+        : "Faltando 7 dias ou menos, ou com a data já passada, sobe para Alta.";
+    }
+  }
+  function montarAgravantes() {
+    $("agravantes").innerHTML = AGRAVANTES.map(function (a) {
+      var cls = a.efeito === "critica" ? "lv-critica" : a.efeito === "alta" ? "lv-alta" : "lv-normal";
+      return '<label class="check"><input type="checkbox" id="ag-' + a.id + '"><span><strong>' + esc(a.titulo) + "</strong><small>" + esc(a.ajuda) +
+        '</small></span><span class="effect ' + cls + '">' + esc(a.rotulo) + "</span></label>";
+    }).join("");
+  }
+
+  /* ---------- Cálculo ---------- */
+  function calcular() {
+    var t = TEMAS[estado.temaId];
+    var trilha = [];
+    var nivel = t.base, porBase = t.por, nomeBase = t.sub;
+    if (t.variantes) {
+      var o = t.variantes.opcoes[+$("variante").value || 0];
+      nivel = o.nivel; porBase = o.por; nomeBase = t.sub + " · " + o.nome;
+    }
+    trilha.push({ n: nivel, txt: "Prioridade base do assunto. " + porBase });
+
+    var abertura = lerInputLocal($("abertura").value) || new Date();
+
+    if (t.data) {
+      var d = lerData($("data-informada").value);
+      if (d) {
+        var hoje = new Date(abertura.getFullYear(), abertura.getMonth(), abertura.getDate());
+        var dias = Math.round((d - hoje) / 86400000);
+        var alvo = null, motivo;
+        if (dias < 0) { alvo = "alta"; motivo = "A data informada já passou (" + fmtData(d) + ")."; }
+        else if (dias <= 7) { alvo = "alta"; motivo = "Faltam " + dias + (dias === 1 ? " dia" : " dias") + " para a data informada (" + fmtData(d) + ")."; }
+        else if (t.data.regra === "programavel" && dias <= 30) { alvo = "normal"; motivo = "Faltam " + dias + " dias para o início: o prazo de aviso de 30 dias está em jogo."; }
+        if (alvo) {
+          nivel = maxN(nivel, alvo);
+          trilha.push({ n: alvo, txt: motivo });
+        } else {
+          trilha.push({ n: nivel, txt: "A data informada (" + fmtData(d) + ") ainda está longe: não muda o nível.", sem: true, explicado: true });
+        }
+      }
+    }
+
+    AGRAVANTES.forEach(function (a) {
+      if (!$("ag-" + a.id).checked || (a.efeito !== "critica" && a.efeito !== "alta")) return;
+      nivel = maxN(nivel, a.efeito);
+      trilha.push({ n: a.efeito, txt: a.titulo + "." });
+    });
+    if ($("ag-coletivo").checked) {
+      var a1 = nivel; nivel = maxN(up(nivel), "alta");
+      trilha.push(a1 === nivel
+        ? { n: nivel, txt: "Atinge várias pessoas: o nível já está em Crítica.", sem: true, explicado: true }
+        : { n: nivel, txt: "Atinge várias pessoas: sobe um nível (de " + NIVEIS[a1].nome + " para " + NIVEIS[nivel].nome + ")." });
+    }
+    if ($("ag-reincidente").checked) {
+      var a2 = nivel; nivel = maxN(nivel, rank(up(nivel)) > rank("alta") ? "alta" : up(nivel));
+      trilha.push({ n: nivel, txt: a2 === nivel ? "Reclamação repetida: o nível já está em Alta ou acima." : "Reclamação repetida: sobe de " + NIVEIS[a2].nome + " para " + NIVEIS[nivel].nome + ".", sem: a2 === nivel, explicado: a2 === nivel });
+    }
+
+    // Marca como "sem efeito" os pisos que ficaram abaixo do nível final
+    trilha.forEach(function (x, i) { if (i > 0 && rank(x.n) < rank(nivel)) x.sem = true; });
+
+    return { tema: t, nomeAssunto: nomeBase, nivel: nivel, trilha: trilha, abertura: abertura, prazo: prazo(nivel, abertura) };
+  }
+
+  var ultimo = null;
+  function render() {
+    var r = calcular(); ultimo = r;
+    var N = NIVEIS[r.nivel];
+    var top = $("res-top");
+    top.setAttribute("data-lv", r.nivel);
+    top.style.setProperty("--lvc", "var(--" + r.nivel + ")");
+    top.style.setProperty("--lvdot", "var(--" + r.nivel + "-dot)");
+    $("res-nivel").textContent = N.nome;
+    $("res-prazo").textContent = fmtDataHora(r.prazo);
+    $("res-regra").textContent = N.regra;
+    $("res-portal").innerHTML = "Prioridade “" + esc(N.portal) + "”";
+    atualizarContagem();
+
+    var esc1 = $("res-escalar");
+    esc1.hidden = r.nivel !== "critica";
+    if (r.nivel === "critica") {
+      esc1.innerHTML = "<strong>Escale agora.</strong> Avise o Head de RH por telefone ou mensagem, mesmo fora do expediente, e registre no chamado. Se houver paciente envolvido, avise também a coordenação da unidade. Não espere o prazo para agir.";
+    }
+    var dica = $("res-dica");
+    var textos = [];
+    if (r.tema.dica) textos.push(esc(r.tema.dica));
+    if (r.nivel === "planejada") textos.push("Na triagem, combine com a pessoa uma data de entrega e registre no chamado.");
+    dica.hidden = !textos.length;
+    dica.innerHTML = textos.map(function (x) { return "<p>" + x + "</p>"; }).join("");
+
+    $("res-trilha").innerHTML = r.trilha.map(function (x) {
+      return '<li class="' + (x.sem ? "muted" : "") + '">' + pill(x.n) + "<span>" + esc(x.txt) + (x.sem && !x.explicado ? " Superado por um nível mais alto." : "") + "</span></li>";
+    }).join("");
+    $("copiado").hidden = true;
+    $("copybox").hidden = true;
+  }
+  function atualizarContagem() {
+    if (!ultimo) return;
+    var diff = ultimo.prazo - new Date(), el = $("res-contagem");
+    el.classList.toggle("late", diff < 0);
+    el.textContent = diff >= 0 ? "Faltam " + fmtDur(diff) : "Prazo vencido há " + fmtDur(diff);
+  }
+  function resumo() {
+    var r = ultimo, N = NIVEIS[r.nivel], vinc = VINCULOS.filter(function (v) { return v.slug === estado.vinculo; })[0].nome;
+    var motivos = r.trilha.filter(function (x) { return !x.sem; }).map(function (x) { return "- " + x.txt; }).join("\n");
+    return "SLA do chamado\n" +
+      "Assunto: " + vinc + " › " + r.tema.cat + " › " + r.nomeAssunto + "\n" +
+      "Prioridade: " + N.nome + " (no portal: " + N.portal + ")\n" +
+      "Aberto em: " + fmtDataHora(r.abertura) + "\n" +
+      "Primeira resposta até: " + fmtDataHora(r.prazo) + " (" + N.regra.toLowerCase() + ")\n" +
+      "Motivo:\n" + motivos;
+  }
+
+  /* ---------- Tabela ---------- */
+  var filtroVinc = "todos-os";
+  function sobeQuando(t) {
+    var p = [];
+    if (t.variantes) p.push(t.variantes.opcoes.map(function (o) { return o.nome + ": " + NIVEIS[o.nivel].nome; }).join(" · "));
+    if (t.data) p.push(t.data.regra === "programavel" ? "Início em até 30 dias: Normal · em até 7 dias: Alta" : t.data.label + " em até 7 dias: Alta");
+    if (t.dica && !t.variantes && !t.data) p.push(t.dica);
+    return p.length ? p.map(esc).join("<br>") : '<span class="cat">Só pelos agravantes</span>';
+  }
+  function montarFiltro() {
+    var ops = [{ slug: "todos-os", nome: "Todos" }].concat(VINCULOS).concat([{ slug: "todos", nome: "Comuns a todos" }]);
+    $("filtro-vinculo").innerHTML = ops.map(function (v) {
+      return '<button type="button" data-f="' + v.slug + '" aria-pressed="' + (v.slug === filtroVinc) + '">' + v.nome + "</button>";
+    }).join("");
+  }
+  function montarTabela() {
+    var q = $("busca").value.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    var lista = TEMAS.filter(function (t) {
+      if (filtroVinc !== "todos-os" && t.v !== filtroVinc) return false;
+      if (!q) return true;
+      var alvo = (t.cat + " " + t.sub + " " + t.por + " " + (t.dica || "")).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+      return alvo.indexOf(q) >= 0;
+    }).sort(function (a, b) { return ORDEM_VINC[a.v] - ORDEM_VINC[b.v]; });
+    var nomes = { pj: "PJ", clt: "CLT", estagio: "Estágio", todos: "Comuns a PJ, CLT e Estágio" };
+    var html = "", grupo = null;
+    lista.forEach(function (t) {
+      if (t.v !== grupo) { grupo = t.v; html += '<tr class="group"><td colspan="5">' + nomes[t.v] + "</td></tr>"; }
+      var base = t.variantes ? t.variantes.opcoes[0].nivel : t.base;
+      html += "<tr><td><div class=\"sub\">" + esc(t.sub) + '</div><div class="cat">' + esc(t.cat) + "</div></td>" +
+        "<td>" + pill(base) + (t.variantes ? '<div class="cat" style="margin-top:4px">varia</div>' : "") + "</td>" +
+        "<td>" + sobeQuando(t) + "</td>" +
+        '<td class="why">' + esc(t.variantes ? t.variantes.opcoes[0].por : t.por) + "</td>" +
+        '<td><button class="btn link" type="button" data-usar="' + t.id + '">Calcular</button></td></tr>';
+    });
+    $("tabela").innerHTML = html || '<tr><td colspan="5">Nenhum assunto encontrado. Tente outra palavra.</td></tr>';
+    $("contagem").textContent = lista.length + (lista.length === 1 ? " assunto" : " assuntos");
+  }
+
+  /* ---------- Regras ---------- */
+  function montarRegras() {
+    $("niveis").innerHTML = ORDEM.slice().reverse().map(function (n) {
+      var N = NIVEIS[n];
+      return '<div class="panel level-card">' + pill(n) + '<p class="sla">' + esc(N.regra) + "</p><p>" + esc(N.desc) + "</p><p>No portal: <strong>" + esc(N.portal) + "</strong></p></div>";
+    }).join("");
+    $("cfg-ini").value = fmtMin(cfg.ini);
+    $("cfg-fim").value = fmtMin(cfg.fim);
+    $("cfg-sp").checked = !!cfg.sp;
+    montarFeriados();
+  }
+  function montarFeriados() {
+    var agora = new Date(), y = agora.getFullYear();
+    var prox = feriados(y).lista.concat(feriados(y + 1).lista).filter(function (x) { return x[0] >= soma(agora, -1); }).slice(0, 8);
+    $("feriados").textContent = "Próximos feriados considerados: " + prox.map(function (x) { return dois(x[0].getDate()) + "/" + dois(x[0].getMonth() + 1) + " " + x[1]; }).join(" · ");
+    $("expediente-hint").textContent = "Expediente considerado: segunda a sexta, das " + fmtMin(cfg.ini) + " às " + fmtMin(cfg.fim) + ", sem feriados. Para mudar, veja a aba Regras.";
+  }
+  function lerHora(v) { var m = /^(\d{2}):(\d{2})/.exec(v || ""); return m ? +m[1] * 60 + +m[2] : null; }
+
+  /* ---------- Eventos ---------- */
+  function selecionarTema(id) {
+    var t = TEMAS[id];
+    if (t.v !== "todos") estado.vinculo = t.v;
+    montarVinculos();
+    var cat = montarCategorias(t.cat);
+    montarAssuntos(cat, id);
+    render();
+  }
+  function trocarAba(nome) {
+    ["calc", "tabela", "regras"].forEach(function (a) {
+      $("view-" + a).hidden = a !== nome;
+      $("tab-" + a).setAttribute("aria-selected", String(a === nome));
+    });
+    try { localStorage.setItem("sla-rh-aba", nome); } catch (e) {}
+  }
+
+  document.querySelector("nav.tabs").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-tab]"); if (b) trocarAba(b.dataset.tab);
+  });
+  $("vinculos").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-v]"); if (!b) return;
+    estado.vinculo = b.dataset.v; montarVinculos();
+    var atual = TEMAS[estado.temaId];
+    var cat = montarCategorias(atual.cat);
+    montarAssuntos(cat, atual.v === "todos" ? atual.id : null);
+    render();
+  });
+  $("categoria").addEventListener("change", function () { montarAssuntos(this.value, null); render(); });
+  $("assunto").addEventListener("change", function () { estado.temaId = +this.value; montarDetalhes(); render(); });
+  $("variante").addEventListener("change", render);
+  $("data-informada").addEventListener("change", render);
+  $("limpar-data").addEventListener("click", function () { $("data-informada").value = ""; render(); });
+  $("agravantes").addEventListener("change", render);
+  $("abertura").addEventListener("change", render);
+  $("agora").addEventListener("click", function () { $("abertura").value = paraInputLocal(new Date()); render(); });
+  $("copiar").addEventListener("click", function () {
+    var txt = resumo(), box = $("copybox");
+    function fallback() { box.hidden = false; box.value = txt; box.focus(); box.select(); $("copiado").hidden = false; $("copiado").textContent = "Texto selecionado: copie com Ctrl+C"; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () { $("copiado").hidden = false; $("copiado").textContent = "Resumo copiado"; }, fallback);
+    } else fallback();
+  });
+  $("busca").addEventListener("input", montarTabela);
+  $("filtro-vinculo").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-f]"); if (!b) return;
+    filtroVinc = b.dataset.f; montarFiltro(); montarTabela();
+  });
+  $("tabela").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-usar]"); if (!b) return;
+    selecionarTema(+b.dataset.usar); trocarAba("calc"); window.scrollTo(0, 0);
+  });
+  function aplicarCfg() {
+    var ini = lerHora($("cfg-ini").value), fim = lerHora($("cfg-fim").value);
+    if (ini !== null && fim !== null && fim - ini >= 120) { cfg.ini = ini; cfg.fim = fim; }
+    cfg.sp = $("cfg-sp").checked; cacheFeriados = {};
+    salvarCfg(); montarFeriados(); render();
+  }
+  $("cfg-ini").addEventListener("change", aplicarCfg);
+  $("cfg-fim").addEventListener("change", aplicarCfg);
+  $("cfg-sp").addEventListener("change", aplicarCfg);
+
+  /* ---------- Início: exemplo realista ---------- */
+  montarAgravantes();
+  montarFiltro();
+  montarTabela();
+  montarRegras();
+  $("abertura").value = paraInputLocal(new Date());
+  var exemplo = TEMAS.filter(function (t) { return t.v === "clt" && t.sub === "Pagamento não recebido"; })[0];
+  selecionarTema(exemplo.id);
+  try { var aba = localStorage.getItem("sla-rh-aba"); if (aba && $("view-" + aba)) trocarAba(aba); } catch (e) {}
+  setInterval(atualizarContagem, 30000);
+})();
+</script>
