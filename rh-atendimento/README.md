@@ -99,6 +99,21 @@ update public.rh_usuarios set papel = 'admin' where email = 'pessoa@empresa.com.
 Sem `RESEND_API_KEY` o sistema continua funcionando normalmente — apenas não envia e-mails,
 e o colaborador acompanha pelo protocolo.
 
+### 2.3.1 Enviar por uma conta Gmail (sem mexer no DNS)
+
+Se não for possível validar o domínio da empresa no Resend, o portal envia por uma conta
+Gmail dedicada (por exemplo `rhgrupotea.portal@gmail.com`):
+
+1. Crie a conta e ligue a **verificação em duas etapas**.
+2. Em <https://myaccount.google.com/apppasswords>, crie uma senha de app chamada "Portal RH".
+3. Na Vercel, cadastre `SMTP_USUARIO` (o endereço Gmail) e `SMTP_SENHA` (a senha de app, como
+   variável secreta) e faça um novo deploy.
+
+Com essas duas variáveis, o SMTP tem prioridade sobre o Resend. O remetente aparece como
+"RH Grupo TEA" (ajuste em `SMTP_NOME_REMETENTE`). Limite do Gmail: 500 e-mails por dia. Nos
+primeiros envios, peça às pessoas para marcar como "não é spam". Para o "Esqueci minha senha",
+use os mesmos dados no SMTP do Supabase: host `smtp.gmail.com`, porta 465.
+
 ### 2.4 Publicar na Vercel
 
 1. Importe o repositório em <https://vercel.com/new>.
