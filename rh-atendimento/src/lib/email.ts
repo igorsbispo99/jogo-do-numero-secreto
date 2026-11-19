@@ -1,10 +1,17 @@
 import "server-only";
+import nodemailer, { type Transporter } from "nodemailer";
 import { Resend } from "resend";
 
 /**
- * Envio de e-mail pelo Resend (plano gratuito: 3.000 e-mails/mês).
- * Sem RESEND_API_KEY configurada o sistema continua funcionando normalmente -
- * apenas registra no log em vez de enviar.
+ * Envio de e-mail por um destes caminhos, nesta ordem:
+ *
+ * 1. SMTP de uma caixa de e-mail (SMTP_USUARIO + SMTP_SENHA). Serve para
+ *    enviar por uma conta Gmail com senha de app, sem configurar DNS. O
+ *    servidor padrão é o do Gmail; outro servidor vai em SMTP_HOST/SMTP_PORTA.
+ * 2. Resend (RESEND_API_KEY), que exige o domínio do remetente validado.
+ *
+ * Sem nenhum dos dois o sistema continua funcionando normalmente - apenas
+ * registra no log em vez de enviar.
  */
 
 type Envio = {
@@ -85,12 +92,51 @@ function montarHtml(envio: Envio): string {
 </body></html>`;
 }
 
+let transporteSmtp: Transporter | null = null;
+
+function smtp(): Transporter | null {
+  const usuario = process.env.SMTP_USUARIO;
+  const senha = process.env.SMTP_SENHA;
+  if (!usuario || !senha) return null;
+  if (transporteSmtp) return transporteSmtp;
+
+  const porta = Number(process.env.SMTP_PORTA ?? 465);
+  transporteSmtp = nodemailer.createTransport({
+    host: process.env.SMTP_HOST ?? "smtp.gmail.com",
+    port: porta,
+    secure: porta === 465,
+    auth: { user: usuario, pass: senha },
+  });
+  return transporteSmtp;
+}
+
+async function enviarPorSmtp(transporte: Transporter, envio: Envio): Promise<boolean> {
+  // O Gmail só aceita como remetente a própria conta: o nome de exibição é o que muda.
+  const nome = process.env.SMTP_NOME_REMETENTE ?? "RH Grupo TEA";
+  try {
+    await transporte.sendMail({
+      from: { name: nome, address: process.env.SMTP_USUARIO! },
+      to: envio.para,
+      subject: envio.assunto,
+      html: montarHtml(envio),
+    });
+    return true;
+  } catch (erro) {
+    // E-mail nunca pode derrubar a abertura do chamado.
+    console.error("[email] falha no envio por SMTP:", erro instanceof Error ? erro.message : erro);
+    return false;
+  }
+}
+
 async function enviar(envio: Envio): Promise<boolean> {
+  const transporte = smtp();
+  if (transporte) return enviarPorSmtp(transporte, envio);
+
   const apiKey = process.env.RESEND_API_KEY;
   const remetente = process.env.EMAIL_REMETENTE ?? "RH Grupo TEA <onboarding@resend.dev>";
 
   if (!apiKey) {
-    console.info("[email] RESEND_API_KEY ausente - envio ignorado:", envio.assunto);
+    console.info("[email] sem SMTP nem RESEND_API_KEY - envio ignorado:", envio.assunto);
     return false;
   }
 
