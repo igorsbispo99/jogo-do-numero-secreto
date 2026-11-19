@@ -4,9 +4,13 @@ import { alternarTeste, assumirChamado, removerAnexo } from "@/actions/rh";
 import { CabecalhoRh } from "@/components/CabecalhoRh";
 import { ControlesChamado } from "@/components/ControlesChamado";
 import { EtiquetaPrioridade, EtiquetaStatus, EtiquetaVinculo } from "@/components/Etiquetas";
+import { PainelSla } from "@/components/PainelSla";
 import { RespostaRh } from "@/components/RespostaRh";
+import { RevisarSla } from "@/components/RevisarSla";
+import { EtiquetaAConfirmar, EtiquetaNivel } from "@/components/Sla";
+import { regraDoAssunto } from "@/lib/sla/regras";
 import { DIAS_RETENCAO_ANEXOS } from "@/lib/dominio";
-import { formatarBytes, formatarData, formatarDataHora, mascararCpf } from "@/lib/format";
+import { formatarBytes, formatarData, formatarDataHora, formatarPrazo, mascararCpf } from "@/lib/format";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { agenteAtual, supabaseServidor } from "@/lib/supabase/server";
 import type { Anexo, Chamado, Evento, Mensagem } from "@/lib/tipos";
@@ -58,6 +62,13 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
   );
 
   const responsavel = (equipe ?? []).find((p) => p.id === dados.responsavel_id);
+  const confirmadoPor = (equipe ?? []).find((p) => p.id === dados.sla_confirmado_por)?.nome ?? null;
+  const { regra } = regraDoAssunto(dados.vinculo, dados.categoria, dados.subcategoria);
+  const agora = new Date();
+  const respostaPendente =
+    !dados.primeira_resposta_em && dados.sla_primeira_resposta_ate
+      ? formatarPrazo(dados.sla_primeira_resposta_ate)
+      : null;
 
   return (
     <>
@@ -75,7 +86,12 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
                 <span className="font-mono text-sm font-bold text-slate-500">{dados.protocolo}</span>
                 <EtiquetaVinculo vinculo={dados.vinculo} />
                 <EtiquetaStatus status={dados.status} />
-                <EtiquetaPrioridade prioridade={dados.prioridade} />
+                {dados.sla_nivel ? (
+                  <EtiquetaNivel nivel={dados.sla_nivel} />
+                ) : (
+                  <EtiquetaPrioridade prioridade={dados.prioridade} />
+                )}
+                {dados.sla_nivel && !dados.sla_confirmado_em && <EtiquetaAConfirmar />}
                 {dados.de_teste && (
                   <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600">
                     Teste · fora dos indicadores
@@ -118,8 +134,11 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
               prioridade={dados.prioridade}
               responsavelId={dados.responsavel_id}
               equipe={equipe ?? []}
+              mostrarPrioridade={!dados.sla_nivel}
             />
           </div>
+
+          <PainelSla chamado={dados} confirmadoPor={confirmadoPor} agora={agora} />
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -185,10 +204,31 @@ export default async function PaginaChamado({ params }: { params: Promise<{ id: 
               })}
             </div>
 
-            <RespostaRh chamadoId={dados.id} />
+            <RespostaRh chamadoId={dados.id} prazoPrimeiraResposta={respostaPendente} />
           </div>
 
           <aside className="space-y-6">
+            {dados.sla_nivel && (
+              <RevisarSla
+                key={`${dados.sla_confirmado_em ?? "previa"}-${dados.sla_nivel}`}
+                chamadoId={dados.id}
+                confirmado={Boolean(dados.sla_confirmado_em)}
+                variantes={
+                  regra.variantes
+                    ? {
+                        titulo: regra.variantes.titulo,
+                        opcoes: regra.variantes.opcoes.map((o) => ({ nome: o.nome, nivel: o.nivel })),
+                      }
+                    : null
+                }
+                varianteAtual={dados.sla_variante ?? null}
+                agravantesAtuais={dados.sla_agravantes ?? []}
+                sugestoes={dados.sla_sugestoes ?? []}
+                nivelManualAtual={dados.sla_nivel_manual ?? null}
+                justificativaAtual={dados.sla_justificativa ?? null}
+              />
+            )}
+
             <div className="cartao p-5">
               <h2 className="text-sm font-bold text-slate-900">Solicitante</h2>
               <dl className="mt-3 space-y-2 text-sm">

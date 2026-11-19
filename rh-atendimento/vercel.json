@@ -4,6 +4,10 @@
     {
       "path": "/api/limpeza-anexos",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/resumo-diario",
+      "schedule": "30 10 * * 1-5"
     }
   ]
 }

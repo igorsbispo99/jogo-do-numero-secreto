@@ -12,18 +12,21 @@ export function ControlesChamado({
   prioridade,
   responsavelId,
   equipe,
+  mostrarPrioridade = true,
 }: {
   chamadoId: string;
   status: string;
   prioridade: string;
   responsavelId: string | null;
   equipe: { id: string; nome: string }[];
+  /** Com SLA calculado, a prioridade segue a classificação e muda pelo quadro de SLA. */
+  mostrarPrioridade?: boolean;
 }) {
   const [estado, acao] = useActionState(atualizarChamado, INICIAL);
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
-    <form ref={formRef} action={acao} className="grid gap-3 sm:grid-cols-3">
+    <form ref={formRef} action={acao} className={`grid gap-3 ${mostrarPrioridade ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
       <input type="hidden" name="chamadoId" value={chamadoId} />
 
       <div>
@@ -45,6 +48,7 @@ export function ControlesChamado({
         </select>
       </div>
 
+      {mostrarPrioridade && (
       <div>
         <label className="rotulo" htmlFor="prioridade">
           Prioridade
@@ -63,6 +67,7 @@ export function ControlesChamado({
           ))}
         </select>
       </div>
+      )}
 
       <div>
         <label className="rotulo" htmlFor="responsavelId">
@@ -85,7 +90,7 @@ export function ControlesChamado({
       </div>
 
       {estado.estado === "erro" && (
-        <p role="alert" className="text-sm font-medium text-red-700 sm:col-span-3">
+        <p role="alert" className="text-sm font-medium text-red-700 sm:col-span-full">
           {estado.mensagem}
         </p>
       )}

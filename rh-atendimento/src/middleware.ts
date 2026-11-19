@@ -35,8 +35,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const ehLogin = pathname.startsWith("/rh/login");
+  // Recuperação de senha: quem esqueceu a senha ainda não está logado.
+  const ehPublica = ehLogin || pathname.startsWith("/rh/recuperar") || pathname.startsWith("/rh/auth/");
 
-  if (!user && pathname.startsWith("/rh") && !ehLogin) {
+  if (!user && pathname.startsWith("/rh") && !ehPublica) {
     const url = request.nextUrl.clone();
     url.pathname = "/rh/login";
     url.search = "";

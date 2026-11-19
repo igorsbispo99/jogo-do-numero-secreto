@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CabecalhoRh } from "@/components/CabecalhoRh";
+import { IndicadoresSla } from "@/components/IndicadoresSla";
 import { Barras } from "@/components/graficos/Barras";
 import { Rosca } from "@/components/graficos/Rosca";
 import { Tendencia } from "@/components/graficos/Tendencia";
@@ -439,6 +440,8 @@ export default async function PaginaIndicadores({
             )}
           </div>
         )}
+
+        <IndicadoresSla inicio={inicioAtual} vinculo={filtros.vinculo} unidade={filtros.unidade} />
 
         <section className="cartao mt-6 p-5">
           <div className="flex flex-wrap items-baseline justify-between gap-2">

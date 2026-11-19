@@ -7,6 +7,23 @@ import { emailChamadoResolvido, emailNovaResposta } from "@/lib/email";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { exigirAgente, supabaseServidor } from "@/lib/supabase/server";
 import { tituloStatus } from "@/lib/dominio";
+import { formatarPrazo } from "@/lib/format";
+import { calcularSla } from "@/lib/sla/calcular";
+import { proximoPrazo } from "@/lib/sla/estado";
+import {
+  agravanteValido,
+  NIVEIS_SLA,
+  nivelValido,
+  type AgravanteId,
+  type NivelSla,
+} from "@/lib/sla/regras";
+import {
+  aplicarPrevia,
+  avisarCritico,
+  colunasDoResultado,
+  registrarTransicao,
+  tituloAgravante,
+} from "@/lib/sla/servidor";
 import { atualizarChamadoSchema, primeiroErro, respostaRhSchema } from "@/lib/validacao";
 
 export type EstadoSimples =
@@ -119,6 +136,11 @@ export async function responderChamado(
 
   if (Object.keys(atualizacao).length > 0) {
     await supabase.from("chamados").update(atualizacao).eq("id", chamado.id);
+    await registrarTransicao(chamado.id, {
+      statusAnterior: chamado.status,
+      status: statusFinal,
+      primeiraRespostaEm: (atualizacao.primeira_resposta_em as string | undefined) ?? null,
+    });
   }
 
   if (statusFinal !== chamado.status) {
@@ -233,6 +255,9 @@ export async function atualizarChamado(
   if (Object.keys(atualizacao).length === 0) return { estado: "ok" };
 
   await supabase.from("chamados").update(atualizacao).eq("id", chamado.id);
+  if (atualizacao.status) {
+    await registrarTransicao(chamado.id, { statusAnterior: chamado.status, status: status });
+  }
 
   if (eventos.length > 0) {
     await supabase.from("chamado_eventos").insert(
@@ -362,5 +387,178 @@ export async function assumirChamado(formData: FormData): Promise<void> {
   });
 
   revalidatePath(`/rh/chamados/${chamadoId}`);
+  revalidatePath("/rh");
+}
+
+// ---------------------------------------------------------------------------
+// SLA: confirmar, revisar e calcular
+// ---------------------------------------------------------------------------
+
+const mesmoConjunto = (a: readonly string[] | null | undefined, b: readonly string[]) =>
+  !!a && a.length === b.length && a.every((x) => b.includes(x));
+
+/**
+ * Oficializa o SLA do chamado: confirma a prévia como está ou grava a revisão
+ * (detalhe do assunto, agravantes e, se preciso, ajuste manual do nível).
+ *
+ * Na primeira confirmação, compara com a prévia e guarda se ela acertou - é
+ * esse número que mostra, em Indicadores, quando a classificação humana pode
+ * diminuir.
+ */
+export async function classificarSla(
+  _anterior: EstadoSimples,
+  formData: FormData,
+): Promise<EstadoSimples> {
+  let agente;
+  try {
+    agente = await exigirAgente();
+  } catch {
+    return { estado: "erro", mensagem: "Sessão expirada. Faça login novamente." };
+  }
+
+  const chamadoId = String(formData.get("chamadoId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(chamadoId)) return { estado: "erro", mensagem: "Chamado inválido." };
+
+  const agravantes = formData.getAll("agravante").filter(agravanteValido) as AgravanteId[];
+  const variante = String(formData.get("variante") ?? "").trim() || null;
+  const manualBruto = String(formData.get("nivelManual") ?? "");
+  const nivelManual: NivelSla | null = nivelValido(manualBruto) ? manualBruto : null;
+  const justificativa = String(formData.get("justificativa") ?? "").trim().slice(0, 500);
+
+  if (nivelManual && justificativa.length < 5) {
+    return { estado: "erro", mensagem: "Explique em poucas palavras o motivo do ajuste manual do nível." };
+  }
+
+  const supabase = supabaseAdmin();
+  const { data: chamado, error } = await supabase
+    .from("chamados")
+    .select(
+      "id, protocolo, vinculo, categoria, subcategoria, assunto, descricao, dados_extras, criado_em, status, primeira_resposta_em, sla_nivel, sla_previa_nivel, sla_previa_agravantes, sla_confirmado_em, sla_pausado_desde, sla_minutos_pausados",
+    )
+    .eq("id", chamadoId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[sla] leitura para classificar:", error.message);
+    return {
+      estado: "erro",
+      mensagem: "O banco ainda não tem a atualização de SLA. Peça para rodar o supabase/schema.sql.",
+    };
+  }
+  if (!chamado) return { estado: "erro", mensagem: "Chamado não encontrado." };
+
+  const resultado = calcularSla({
+    vinculo: chamado.vinculo,
+    categoria: chamado.categoria,
+    subcategoria: chamado.subcategoria,
+    dadosExtras: chamado.dados_extras,
+    abertoEm: new Date(chamado.criado_em),
+    agravantes,
+    variante,
+    nivelManual,
+    texto: chamado.descricao,
+  });
+
+  const colunas = colunasDoResultado(resultado, chamado.sla_minutos_pausados ?? 0);
+  const primeiraConfirmacao = !chamado.sla_confirmado_em;
+
+  const atualizacao: Record<string, unknown> = {
+    ...colunas,
+    sla_nivel_manual: nivelManual,
+    sla_justificativa: nivelManual ? justificativa : null,
+    sla_confirmado_em: new Date().toISOString(),
+    sla_confirmado_por: agente.id,
+    sla_proximo_prazo: proximoPrazo({
+      status: chamado.status,
+      primeira_resposta_em: chamado.primeira_resposta_em,
+      sla_primeira_resposta_ate: colunas.sla_primeira_resposta_ate,
+      sla_resolucao_ate: colunas.sla_resolucao_ate,
+      sla_pausado_desde: chamado.sla_pausado_desde,
+    }),
+  };
+  if (primeiraConfirmacao && chamado.sla_previa_nivel) {
+    atualizacao.sla_previa_correta = chamado.sla_previa_nivel === resultado.nivel;
+    atualizacao.sla_previa_agravantes_corretos = mesmoConjunto(chamado.sla_previa_agravantes, resultado.agravantes);
+  }
+
+  const { error: erroUpdate } = await supabase.from("chamados").update(atualizacao).eq("id", chamado.id);
+  if (erroUpdate) {
+    console.error("[sla] gravar classificação:", erroUpdate.message);
+    return { estado: "erro", mensagem: "Não consegui gravar a classificação. Tente de novo." };
+  }
+
+  const titulo = NIVEIS_SLA[resultado.nivel].titulo;
+  const prazos = `1ª resposta até ${formatarPrazo(colunas.sla_primeira_resposta_ate)} · resolução até ${formatarPrazo(colunas.sla_resolucao_ate)}`;
+  const mudouNivel = chamado.sla_nivel && chamado.sla_nivel !== resultado.nivel;
+  const lista = resultado.agravantes.length
+    ? ` Agravantes: ${resultado.agravantes.map(tituloAgravante).join("; ")}.`
+    : "";
+  await supabase.from("chamado_eventos").insert({
+    chamado_id: chamado.id,
+    autor_nome: agente.nome,
+    descricao: mudouNivel
+      ? `SLA revisado de ${NIVEIS_SLA[chamado.sla_nivel as NivelSla].titulo} para ${titulo} · ${prazos}.${lista}${nivelManual ? ` Ajuste manual: ${justificativa}` : ""}`
+      : `SLA ${primeiraConfirmacao ? "confirmado" : "reconfirmado"}: ${titulo} · ${prazos}.${lista}`,
+    publico: false,
+  });
+
+  if (resultado.nivel === "critica" && chamado.sla_nivel !== "critica") {
+    await avisarCritico({
+      chamadoId: chamado.id,
+      protocolo: chamado.protocolo,
+      assunto: chamado.assunto,
+      vinculo: chamado.vinculo,
+      resultado,
+      origem: "revisao",
+    });
+  }
+
+  revalidatePath(`/rh/chamados/${chamado.id}`);
+  revalidatePath("/rh");
+  return {
+    estado: "ok",
+    mensagem: mudouNivel ? `SLA revisado para ${titulo}.` : `SLA confirmado: ${titulo}.`,
+  };
+}
+
+/** Calcula a prévia de um chamado que chegou antes da regra de SLA existir. */
+export async function calcularSlaChamado(formData: FormData): Promise<void> {
+  await exigirAgente();
+  const chamadoId = String(formData.get("chamadoId") ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(chamadoId)) return;
+
+  const supabase = supabaseAdmin();
+  const { data: chamado } = await supabase
+    .from("chamados")
+    .select(
+      "id, protocolo, vinculo, categoria, subcategoria, assunto, dados_extras, descricao, solicitante_cpf, criado_em, status, primeira_resposta_em",
+    )
+    .eq("id", chamadoId)
+    .maybeSingle();
+  if (!chamado) return;
+
+  const resultado = await aplicarPrevia({
+    id: chamado.id,
+    protocolo: chamado.protocolo,
+    vinculo: chamado.vinculo,
+    categoria: chamado.categoria,
+    subcategoria: chamado.subcategoria,
+    assunto: chamado.assunto,
+    dadosExtras: chamado.dados_extras ?? {},
+    descricao: chamado.descricao,
+    cpf: chamado.solicitante_cpf,
+    criadoEm: new Date(chamado.criado_em),
+  });
+
+  // A prévia parte de um chamado recém-aberto; aqui o chamado já andou.
+  if (resultado) {
+    await registrarTransicao(chamado.id, {
+      statusAnterior: "aberto",
+      status: chamado.status,
+      primeiraRespostaEm: chamado.primeira_resposta_em,
+    });
+  }
+
+  revalidatePath(`/rh/chamados/${chamado.id}`);
   revalidatePath("/rh");
 }

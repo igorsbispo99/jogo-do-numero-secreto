@@ -25,18 +25,24 @@ export function CabecalhoRh({ agente }: { agente: AgenteRh }) {
             <Link href="/rh/indicadores" className="text-slate-600 hover:text-tea-turquesa-700">
               Indicadores
             </Link>
+            <Link href="/rh/sla" className="text-slate-600 hover:text-tea-turquesa-700">
+              Calculadora de SLA
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3">
-            <span
-              title={agente.email}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-tea-turquesa-100 text-xs font-bold text-tea-turquesa-800"
+            <Link
+              href="/rh/conta"
+              title="Minha conta"
+              className="flex items-center gap-3 rounded-lg hover:text-tea-turquesa-700"
             >
-              {iniciais(agente.nome)}
-            </span>
-            <span className="hidden text-sm font-semibold text-slate-700 sm:block">
-              {agente.nome}
-            </span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-tea-turquesa-100 text-xs font-bold text-tea-turquesa-800">
+                {iniciais(agente.nome)}
+              </span>
+              <span className="hidden text-sm font-semibold text-slate-700 sm:block">
+                {agente.nome}
+              </span>
+            </Link>
             <form action={sair}>
               <button
                 type="submit"

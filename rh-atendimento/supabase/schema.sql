@@ -300,3 +300,100 @@ drop policy if exists "rh le anexos storage" on storage.objects;
 create policy "rh le anexos storage" on storage.objects
   for select to authenticated
   using (bucket_id = 'anexos' and public.e_rh());
+
+-- =====================================================================
+-- SLA, notificações e conta do RH
+-- Pode rodar de novo sem perder dados: tudo aqui só acrescenta.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- SLA do chamado
+-- A prévia é calculada quando o chamado chega (assunto, campos do
+-- formulário e palavras-chave do relato). Quem faz a triagem confirma ou
+-- revisa; a prévia fica guardada para medir o quanto ela acerta.
+-- ---------------------------------------------------------------------
+alter table public.chamados
+  add column if not exists sla_nivel text,
+  add column if not exists sla_variante text,
+  add column if not exists sla_agravantes text[] not null default '{}',
+  add column if not exists sla_nivel_manual text,
+  add column if not exists sla_justificativa text,
+  add column if not exists sla_primeira_resposta_ate timestamptz,
+  add column if not exists sla_resolucao_ate timestamptz,
+  add column if not exists sla_pausado_desde timestamptz,
+  add column if not exists sla_minutos_pausados integer not null default 0,
+  add column if not exists sla_proximo_prazo timestamptz,
+  add column if not exists sla_previa_nivel text,
+  add column if not exists sla_previa_variante text,
+  add column if not exists sla_previa_agravantes text[],
+  add column if not exists sla_sugestoes jsonb not null default '[]'::jsonb,
+  add column if not exists sla_confirmado_em timestamptz,
+  add column if not exists sla_confirmado_por uuid references public.rh_usuarios (id) on delete set null,
+  add column if not exists sla_previa_correta boolean,
+  add column if not exists sla_previa_agravantes_corretos boolean;
+
+do $$ begin
+  alter table public.chamados
+    add constraint chamados_sla_nivel_check
+    check (sla_nivel is null or sla_nivel in ('critica', 'alta', 'normal', 'planejada'));
+exception when duplicate_object then null; end $$;
+
+create index if not exists chamados_sla_nivel_idx on public.chamados (sla_nivel);
+create index if not exists chamados_sla_prazo_idx on public.chamados (sla_proximo_prazo);
+create index if not exists chamados_sla_confirmado_idx on public.chamados (sla_confirmado_em);
+
+-- ---------------------------------------------------------------------
+-- Resumo diário: cada pessoa do RH pode deixar de receber o próprio resumo.
+-- ---------------------------------------------------------------------
+alter table public.rh_usuarios
+  add column if not exists recebe_resumo boolean not null default true;
+
+-- Cada pessoa só pode mudar o próprio nome e a preferência de resumo.
+-- Papel (admin) e acesso (ativo) ficam fora do alcance do próprio usuário.
+revoke update on public.rh_usuarios from authenticated, anon;
+grant update (nome, recebe_resumo) on public.rh_usuarios to authenticated;
+
+-- ---------------------------------------------------------------------
+-- Quem recebe os e-mails de gestão e de triagem.
+-- Não precisa ter login no portal. Administradores editam em /rh/conta.
+--   gestao  : resumo geral diário e aviso imediato de chamado Crítico
+--   triagem : pendências de classificação, atribuição e 1ª resposta,
+--             e aviso imediato de chamado Crítico
+-- ---------------------------------------------------------------------
+create table if not exists public.notificacao_destinatarios (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  papel text not null check (papel in ('gestao', 'triagem')),
+  ativo boolean not null default true,
+  criado_em timestamptz not null default now(),
+  unique (email, papel)
+);
+
+-- Registro de cada e-mail automático enviado: evita duplicados se a rotina
+-- rodar duas vezes e permite conferir depois. Não guarda o conteúdo.
+create table if not exists public.notificacoes_enviadas (
+  id bigserial primary key,
+  tipo text not null,
+  destinatario text not null,
+  referencia text not null,
+  enviado_em timestamptz not null default now(),
+  unique (tipo, destinatario, referencia)
+);
+
+-- Trilha de ações de conta (troca e recuperação de senha). Nunca guarda senha.
+create table if not exists public.rh_auditoria (
+  id bigserial primary key,
+  usuario_id uuid references public.rh_usuarios (id) on delete set null,
+  acao text not null,
+  criado_em timestamptz not null default now()
+);
+
+alter table public.notificacao_destinatarios enable row level security;
+alter table public.notificacoes_enviadas     enable row level security;
+alter table public.rh_auditoria              enable row level security;
+
+drop policy if exists "rh le destinatarios" on public.notificacao_destinatarios;
+create policy "rh le destinatarios" on public.notificacao_destinatarios
+  for select to authenticated using (public.e_rh());
+
+-- notificacoes_enviadas e rh_auditoria ficam sem policy: só o servidor acessa.
