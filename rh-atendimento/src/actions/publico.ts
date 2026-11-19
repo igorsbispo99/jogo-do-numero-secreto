@@ -241,6 +241,7 @@ async function registrarSolicitacao(
     dadosExtras: extras.dados,
     descricao,
     cpf: dados.cpf,
+    email: dados.email,
     criadoEm: new Date(chamado.criado_em),
   });
 
@@ -267,12 +268,20 @@ async function registrarSolicitacao(
 // Consultar chamado (protocolo + CPF)
 // ---------------------------------------------------------------------------
 
+/**
+ * Trava extra do acompanhamento público: prioridade, criticidade e prazos de
+ * SLA são ferramenta interna do RH. Mesmo que um registro desses seja gravado
+ * como público por engano no futuro, ele não chega ao colaborador.
+ */
+const ETAPA_INTERNA = /\bSLA\b|prioridade|criticidade|cr[ií]tic[ao]|prazo/i;
+
 async function carregarChamadoPublico(
   protocolo: string,
   cpf: string,
 ): Promise<ChamadoPublico | null> {
   const supabase = supabaseAdmin();
 
+  // Lista fechada de colunas: nada de prioridade ou SLA sai daqui.
   const { data: chamado } = await supabase
     .from("chamados")
     .select(
@@ -321,7 +330,7 @@ async function carregarChamadoPublico(
     chamado: publico as ChamadoPublico["chamado"],
     mensagens: (mensagens ?? []) as ChamadoPublico["mensagens"],
     anexos: await assinarAnexos(anexosVisiveis),
-    etapas: (etapas ?? []) as ChamadoPublico["etapas"],
+    etapas: ((etapas ?? []) as ChamadoPublico["etapas"]).filter((e) => !ETAPA_INTERNA.test(e.descricao)),
   };
 }
 

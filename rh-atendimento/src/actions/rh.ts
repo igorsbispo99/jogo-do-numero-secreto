@@ -21,6 +21,7 @@ import {
   aplicarPrevia,
   avisarCritico,
   colunasDoResultado,
+  registrarEventoInterno,
   registrarTransicao,
   tituloAgravante,
 } from "@/lib/sla/servidor";
@@ -433,7 +434,7 @@ export async function classificarSla(
   const { data: chamado, error } = await supabase
     .from("chamados")
     .select(
-      "id, protocolo, vinculo, categoria, subcategoria, assunto, descricao, dados_extras, criado_em, status, primeira_resposta_em, sla_nivel, sla_previa_nivel, sla_previa_agravantes, sla_confirmado_em, sla_pausado_desde, sla_minutos_pausados",
+      "id, protocolo, vinculo, categoria, subcategoria, assunto, descricao, dados_extras, solicitante_email, criado_em, status, primeira_resposta_em, sla_nivel, sla_previa_nivel, sla_previa_agravantes, sla_confirmado_em, sla_pausado_desde, sla_minutos_pausados",
     )
     .eq("id", chamadoId)
     .maybeSingle();
@@ -493,14 +494,13 @@ export async function classificarSla(
   const lista = resultado.agravantes.length
     ? ` Agravantes: ${resultado.agravantes.map(tituloAgravante).join("; ")}.`
     : "";
-  await supabase.from("chamado_eventos").insert({
-    chamado_id: chamado.id,
-    autor_nome: agente.nome,
-    descricao: mudouNivel
+  await registrarEventoInterno(
+    chamado.id,
+    agente.nome,
+    mudouNivel
       ? `SLA revisado de ${NIVEIS_SLA[chamado.sla_nivel as NivelSla].titulo} para ${titulo} · ${prazos}.${lista}${nivelManual ? ` Ajuste manual: ${justificativa}` : ""}`
       : `SLA ${primeiraConfirmacao ? "confirmado" : "reconfirmado"}: ${titulo} · ${prazos}.${lista}`,
-    publico: false,
-  });
+  );
 
   if (resultado.nivel === "critica" && chamado.sla_nivel !== "critica") {
     await avisarCritico({
@@ -510,6 +510,7 @@ export async function classificarSla(
       vinculo: chamado.vinculo,
       resultado,
       origem: "revisao",
+      solicitanteEmail: chamado.solicitante_email,
     });
   }
 
@@ -531,7 +532,7 @@ export async function calcularSlaChamado(formData: FormData): Promise<void> {
   const { data: chamado } = await supabase
     .from("chamados")
     .select(
-      "id, protocolo, vinculo, categoria, subcategoria, assunto, dados_extras, descricao, solicitante_cpf, criado_em, status, primeira_resposta_em",
+      "id, protocolo, vinculo, categoria, subcategoria, assunto, dados_extras, descricao, solicitante_cpf, solicitante_email, criado_em, status, primeira_resposta_em",
     )
     .eq("id", chamadoId)
     .maybeSingle();
@@ -547,6 +548,7 @@ export async function calcularSlaChamado(formData: FormData): Promise<void> {
     dadosExtras: chamado.dados_extras ?? {},
     descricao: chamado.descricao,
     cpf: chamado.solicitante_cpf,
+    email: chamado.solicitante_email,
     criadoEm: new Date(chamado.criado_em),
   });
 

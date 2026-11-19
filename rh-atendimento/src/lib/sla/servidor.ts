@@ -19,6 +19,18 @@ import { AGRAVANTES, NIVEIS_SLA, type AgravanteId } from "./regras";
 export const COLUNAS_ESTADO_SLA =
   "status, primeira_resposta_em, sla_primeira_resposta_ate, sla_resolucao_ate, sla_pausado_desde, sla_minutos_pausados";
 
+/**
+ * SLA é ferramenta interna do RH: prioridade, criticidade e prazos nunca
+ * chegam a quem abriu o chamado. Todo registro de SLA no histórico passa por
+ * aqui e fica sempre fora do acompanhamento público.
+ */
+export async function registrarEventoInterno(chamadoId: string, autor: string, descricao: string) {
+  const { error } = await supabaseAdmin()
+    .from("chamado_eventos")
+    .insert({ chamado_id: chamadoId, autor_nome: autor, descricao, publico: false });
+  if (error) console.error("[sla] evento não gravado:", error.message);
+}
+
 export async function destinatarios(papeis: ("gestao" | "triagem")[]): Promise<string[]> {
   try {
     const { data, error } = await supabaseAdmin()
@@ -47,8 +59,11 @@ export async function avisarCritico(dados: {
   vinculo: string;
   resultado: ResultadoSla;
   origem: "previa" | "revisao";
+  /** Quem abriu o chamado nunca recebe o aviso, mesmo que esteja na lista. */
+  solicitanteEmail: string;
 }): Promise<void> {
-  const para = await destinatarios(["gestao", "triagem"]);
+  const solicitante = dados.solicitanteEmail.trim().toLowerCase();
+  const para = (await destinatarios(["gestao", "triagem"])).filter((email) => email !== solicitante);
   if (para.length === 0) return;
   await emailChamadoCritico({
     para,
@@ -94,6 +109,7 @@ export async function aplicarPrevia(chamado: {
   dadosExtras: Record<string, string>;
   descricao: string;
   cpf: string;
+  email: string;
   criadoEm: Date;
 }): Promise<ResultadoSla | null> {
   try {
@@ -135,12 +151,11 @@ export async function aplicarPrevia(chamado: {
       .eq("id", chamado.id);
     if (error) throw error;
 
-    await supabase.from("chamado_eventos").insert({
-      chamado_id: chamado.id,
-      autor_nome: "Sistema",
-      descricao: `Prévia de SLA: ${NIVEIS_SLA[resultado.nivel].titulo} · 1ª resposta até ${formatarPrazo(resultado.primeiraRespostaAte)} · resolução até ${formatarPrazo(resultado.resolucaoAte)}`,
-      publico: false,
-    });
+    await registrarEventoInterno(
+      chamado.id,
+      "Sistema",
+      `Prévia de SLA: ${NIVEIS_SLA[resultado.nivel].titulo} · 1ª resposta até ${formatarPrazo(resultado.primeiraRespostaAte)} · resolução até ${formatarPrazo(resultado.resolucaoAte)}`,
+    );
 
     if (resultado.nivel === "critica") {
       await avisarCritico({
@@ -150,6 +165,7 @@ export async function aplicarPrevia(chamado: {
         vinculo: chamado.vinculo,
         resultado,
         origem: "previa",
+        solicitanteEmail: chamado.email,
       });
     }
     return resultado;
