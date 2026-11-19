@@ -94,3 +94,35 @@ export function nomeArquivoSeguro(nome: string): string {
     .replace(/-+/g, "-")
     .slice(-120);
 }
+
+/** Prazo de SLA: "qui., 19/11 às 18:00", sempre no horário de Brasília. */
+export function formatarPrazo(valor: string | Date | null | undefined): string {
+  if (!valor) return "-";
+  const data = typeof valor === "string" ? new Date(valor) : valor;
+  if (Number.isNaN(data.getTime())) return "-";
+  const partes = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: FUSO,
+  }).formatToParts(data);
+  const parte = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? "";
+  return `${parte("weekday")} ${parte("day")}/${parte("month")} às ${parte("hour")}:${parte("minute")}`;
+}
+
+/** Tempo até (ou desde) um prazo: "faltam 2h 10min", "vencido há 30min". */
+export function tempoAtePrazo(valor: string | Date, agora = new Date()): string {
+  const data = typeof valor === "string" ? new Date(valor) : valor;
+  const diff = data.getTime() - agora.getTime();
+  const min = Math.round(Math.abs(diff) / 60_000);
+  const dias = Math.floor(min / 1440);
+  const horas = Math.floor((min % 1440) / 60);
+  const minutos = min % 60;
+  const partes: string[] = [];
+  if (dias) partes.push(`${dias} ${dias === 1 ? "dia" : "dias"}`);
+  if (horas) partes.push(`${horas}h`);
+  if (!dias && (minutos || !horas)) partes.push(`${minutos}min`);
+  return diff >= 0 ? `faltam ${partes.join(" ")}` : `vencido há ${partes.join(" ")}`;
+}

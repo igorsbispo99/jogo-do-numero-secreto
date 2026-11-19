@@ -1,5 +1,6 @@
 import type { Prioridade, Status } from "./dominio";
 import type { VinculoSlug } from "./catalogo";
+import type { AgravanteId, NivelSla } from "./sla/regras";
 
 export type Chamado = {
   id: string;
@@ -26,6 +27,28 @@ export type Chamado = {
   atualizado_em: string;
   primeira_resposta_em: string | null;
   resolvido_em: string | null;
+} & Partial<ColunasSla>;
+
+/** Colunas de SLA. Opcionais: chamados antigos (ou banco sem a migração) não têm. */
+export type ColunasSla = {
+  sla_nivel: NivelSla | null;
+  sla_variante: string | null;
+  sla_agravantes: AgravanteId[];
+  sla_nivel_manual: NivelSla | null;
+  sla_justificativa: string | null;
+  sla_primeira_resposta_ate: string | null;
+  sla_resolucao_ate: string | null;
+  sla_pausado_desde: string | null;
+  sla_minutos_pausados: number;
+  sla_proximo_prazo: string | null;
+  sla_previa_nivel: NivelSla | null;
+  sla_previa_variante: string | null;
+  sla_previa_agravantes: AgravanteId[] | null;
+  sla_sugestoes: { agravante: AgravanteId; termo: string }[];
+  sla_confirmado_em: string | null;
+  sla_confirmado_por: string | null;
+  sla_previa_correta: boolean | null;
+  sla_previa_agravantes_corretos: boolean | null;
 };
 
 export type Mensagem = {

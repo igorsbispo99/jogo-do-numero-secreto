@@ -14,9 +14,11 @@ type Envio = {
   linhas: string[];
   botao?: { texto: string; url: string };
   rodape?: string;
+  /** Bloco HTML pronto (tabelas dos resumos), inserido depois das linhas. */
+  html?: string;
 };
 
-function urlBase(): string {
+export function urlBase(): string {
   return (
     process.env.NEXT_PUBLIC_URL_BASE ??
     (process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -67,6 +69,7 @@ function montarHtml(envio: Envio): string {
             text-transform:uppercase;color:#06665e;font-weight:700">Grupo TEA · RH</p>
           <h1 style="margin:0 0 16px;font-size:20px;color:#16357d">${escapar(envio.titulo)}</h1>
           ${corpo}
+          ${envio.html ?? ""}
           ${botao}
           <hr style="border:none;border-top:1px solid #e2e8f0;margin:24px 0">
           <p style="margin:0 0 6px;font-size:12px;color:#16357d;font-weight:600">
@@ -82,26 +85,32 @@ function montarHtml(envio: Envio): string {
 </body></html>`;
 }
 
-async function enviar(envio: Envio): Promise<void> {
+async function enviar(envio: Envio): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const remetente = process.env.EMAIL_REMETENTE ?? "RH Grupo TEA <onboarding@resend.dev>";
 
   if (!apiKey) {
-    console.info("[email] RESEND_API_KEY ausente - envio ignorado:", envio.assunto, envio.para);
-    return;
+    console.info("[email] RESEND_API_KEY ausente - envio ignorado:", envio.assunto);
+    return false;
   }
 
   try {
     const resend = new Resend(apiKey);
-    await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: remetente,
       to: envio.para,
       subject: envio.assunto,
       html: montarHtml(envio),
     });
+    if (error) {
+      console.error("[email] falha no envio:", error.message);
+      return false;
+    }
+    return true;
   } catch (erro) {
     // E-mail nunca pode derrubar a abertura do chamado.
     console.error("[email] falha no envio:", erro);
+    return false;
   }
 }
 
@@ -214,5 +223,149 @@ export async function emailAvisoRh(dados: {
     ],
     botao: { texto: "Abrir painel do RH", url: link },
     rodape: "Aviso interno da Central de Atendimento do RH.",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Avisos internos de SLA e resumos diários
+//
+// Só números e links: nenhum nome de colaborador, relato ou dado pessoal sai
+// por e-mail. Os detalhes ficam no portal, protegidos pelo login.
+// ---------------------------------------------------------------------------
+
+export type ItemResumo = {
+  rotulo: string;
+  valor: number | string;
+  /** Caminho no portal (ex.: /rh?prazo=vencidos). Vira link no número. */
+  href?: string;
+  destaque?: "vermelho" | "ambar" | "neutro";
+};
+
+const CORES_DESTAQUE = {
+  vermelho: { fundo: "#f7eff2", texto: "#901845" },
+  ambar: { fundo: "#fff9ee", texto: "#9a6609" },
+  neutro: { fundo: "#f8fafc", texto: "#0f172a" },
+};
+
+function tabelaResumo(titulo: string | null, itens: ItemResumo[]): string {
+  const linhas = itens
+    .map((item) => {
+      const cor = CORES_DESTAQUE[item.destaque ?? "neutro"];
+      const valor = escapar(String(item.valor));
+      const numero = item.href
+        ? `<a href="${escapar(`${urlBase()}${item.href}`)}" style="color:${cor.texto};text-decoration:none">${valor}</a>`
+        : valor;
+      return `<tr>
+        <td style="padding:10px 12px;border-bottom:1px solid #e2e8f0;color:#334155;font-size:14px">${escapar(item.rotulo)}</td>
+        <td align="right" style="padding:10px 12px;border-bottom:1px solid #e2e8f0;background:${cor.fundo};font-size:18px;font-weight:700;color:${cor.texto};white-space:nowrap">${numero}</td>
+      </tr>`;
+    })
+    .join("");
+  const cabecalho = titulo
+    ? `<p style="margin:20px 0 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#64748b">${escapar(titulo)}</p>`
+    : "";
+  return `${cabecalho}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px;border-collapse:separate;overflow:hidden">${linhas}</table>`;
+}
+
+const RODAPE_INTERNO =
+  "Aviso interno da Central de Atendimento do RH. Os números levam direto para a lista no portal.";
+
+export async function emailChamadoCritico(dados: {
+  para: string[];
+  protocolo: string;
+  assunto: string;
+  vinculo: string;
+  motivo: string;
+  primeiraRespostaAte: string;
+  chamadoId: string;
+  origem: "previa" | "revisao";
+}): Promise<boolean> {
+  if (dados.para.length === 0) return false;
+  return enviar({
+    para: dados.para,
+    assunto: `[${dados.protocolo}] Chamado Crítico · escalar agora`,
+    titulo: "Chamado Crítico na fila",
+    linhas: [
+      dados.origem === "previa"
+        ? `A prévia de SLA classificou o chamado ${negrito(dados.protocolo)} como ${negrito("Crítica")}. Escale agora, sem esperar a validação da triagem.`
+        : `O chamado ${negrito(dados.protocolo)} foi reclassificado como ${negrito("Crítica")} na triagem.`,
+      `Assunto: ${escapar(dados.assunto)} (${escapar(dados.vinculo)}).`,
+      `Motivo: ${escapar(dados.motivo)}`,
+      `1ª resposta até ${negrito(dados.primeiraRespostaAte)}.`,
+    ],
+    botao: { texto: "Abrir o chamado", url: `${urlBase()}/rh/chamados/${dados.chamadoId}` },
+    rodape: RODAPE_INTERNO,
+  });
+}
+
+export async function emailResumoPessoal(dados: {
+  para: string;
+  nome: string;
+  dia: string;
+  itens: ItemResumo[];
+}): Promise<boolean> {
+  return enviar({
+    para: dados.para,
+    assunto: `Seus chamados hoje · ${dados.dia}`,
+    titulo: "Seus chamados hoje",
+    linhas: [`Bom dia, ${escapar(dados.nome.split(" ")[0])}! Este é o resumo dos chamados atribuídos a você.`],
+    html: tabelaResumo(null, dados.itens),
+    botao: { texto: "Abrir meus chamados", url: `${urlBase()}/rh?responsavel=meus&ordem=prazo` },
+    rodape: `${RODAPE_INTERNO} Para não receber este resumo, desligue em Minha conta.`,
+  });
+}
+
+export async function emailResumoGestao(dados: {
+  para: string[];
+  dia: string;
+  periodo: string;
+  blocos: { titulo: string; itens: ItemResumo[] }[];
+}): Promise<boolean> {
+  return enviar({
+    para: dados.para,
+    assunto: `Resumo da Central do RH · ${dados.dia}`,
+    titulo: "Resumo da Central do RH",
+    linhas: [`Movimento de ${escapar(dados.periodo)} e situação da fila agora.`],
+    html: dados.blocos.map((b) => tabelaResumo(b.titulo, b.itens)).join(""),
+    botao: { texto: "Abrir os indicadores", url: `${urlBase()}/rh/indicadores` },
+    rodape: RODAPE_INTERNO,
+  });
+}
+
+export async function emailResumoTriagem(dados: {
+  para: string[];
+  dia: string;
+  itens: ItemResumo[];
+}): Promise<boolean> {
+  return enviar({
+    para: dados.para,
+    assunto: `Triagem do dia · ${dados.dia}`,
+    titulo: "Pendências de triagem",
+    linhas: ["Chamados que precisam de classificação, responsável ou 1ª resposta."],
+    html: tabelaResumo(null, dados.itens),
+    botao: { texto: "Abrir a fila", url: `${urlBase()}/rh?ordem=prazo` },
+    rodape: RODAPE_INTERNO,
+  });
+}
+
+export async function emailSenhaAlterada(dados: {
+  para: string;
+  nome: string;
+  quando: string;
+  como: "troca" | "recuperacao";
+}): Promise<boolean> {
+  return enviar({
+    para: dados.para,
+    assunto: "Sua senha do Painel do RH foi alterada",
+    titulo: "Sua senha foi alterada",
+    linhas: [
+      `Olá, ${escapar(dados.nome.split(" ")[0])}!`,
+      dados.como === "troca"
+        ? `A senha do seu acesso ao Painel do RH foi alterada em ${negrito(dados.quando)}, pela tela Minha conta.`
+        : `A senha do seu acesso ao Painel do RH foi redefinida em ${negrito(dados.quando)}, pelo link de recuperação.`,
+      "Por segurança, os outros computadores e celulares em que você estava conectado foram desconectados.",
+      "Se não foi você, avise agora o responsável pelo portal.",
+    ],
+    rodape: "Aviso de segurança automático. Nunca enviamos senhas por e-mail.",
   });
 }

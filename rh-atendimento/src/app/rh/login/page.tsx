@@ -23,6 +23,11 @@ export default function PaginaLogin() {
           <FaixaMarca />
           <div className="p-6">
             <FormularioLogin />
+            <p className="mt-4 text-center text-sm">
+              <Link href="/rh/recuperar" className="font-semibold text-tea-turquesa-700 hover:underline">
+                Esqueci minha senha
+              </Link>
+            </p>
           </div>
         </div>
 

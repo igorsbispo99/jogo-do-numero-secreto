@@ -10,6 +10,7 @@ import {
 import { assinarAnexos, lerAnexos, registrarAnexos, validarAnexos } from "@/lib/anexos";
 import { emailAvisoRh, emailChamadoAberto } from "@/lib/email";
 import { limparTentativasAntigas, registrarTentativa } from "@/lib/limite";
+import { aplicarPrevia, registrarTransicao } from "@/lib/sla/servidor";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import type { Anexo, AnexoComLink, Chamado, Mensagem } from "@/lib/tipos";
 import {
@@ -183,7 +184,7 @@ async function registrarSolicitacao(
   };
 
   const gravar = (registro: Record<string, unknown>) =>
-    supabase.from("chamados").insert(registro).select("id, protocolo").single();
+    supabase.from("chamados").insert(registro).select("id, protocolo, criado_em").single();
 
   let { data: chamado, error } = await gravar(cadastro);
 
@@ -226,6 +227,21 @@ async function registrarSolicitacao(
     chamado_id: chamado.id,
     autor_nome: dados.nome,
     descricao: "Chamado aberto pelo colaborador",
+  });
+
+  // Prévia de SLA (prioridade e prazos). Se falhar, o chamado segue aberto
+  // normalmente e o RH calcula os prazos na tela do chamado.
+  await aplicarPrevia({
+    id: chamado.id,
+    protocolo: chamado.protocolo,
+    vinculo,
+    categoria: dados.categoria,
+    subcategoria: dados.subcategoria,
+    assunto,
+    dadosExtras: extras.dados,
+    descricao,
+    cpf: dados.cpf,
+    criadoEm: new Date(chamado.criado_em),
   });
 
   await Promise.all([
@@ -398,6 +414,9 @@ export async function responderComoColaborador(
       : chamado.status;
 
   await supabase.from("chamados").update({ status: novoStatus }).eq("id", chamado.id);
+  if (novoStatus !== chamado.status) {
+    await registrarTransicao(chamado.id, { statusAnterior: chamado.status, status: novoStatus });
+  }
 
   if (novoStatus !== chamado.status) {
     await supabase.from("chamado_eventos").insert({

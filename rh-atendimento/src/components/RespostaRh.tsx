@@ -8,7 +8,14 @@ import { STATUS } from "@/lib/dominio";
 
 const INICIAL: EstadoSimples = { estado: "inicial" };
 
-export function RespostaRh({ chamadoId }: { chamadoId: string }) {
+export function RespostaRh({
+  chamadoId,
+  prazoPrimeiraResposta = null,
+}: {
+  chamadoId: string;
+  /** Prazo da 1ª resposta, enquanto ela não saiu. */
+  prazoPrimeiraResposta?: string | null;
+}) {
   const [estado, acao] = useActionState(responderChamado, INICIAL);
   const [interna, setInterna] = useState(false);
   // Trocar a chave remonta o campo de anexos, limpando a lista já enviada.
@@ -58,6 +65,13 @@ export function RespostaRh({ chamadoId }: { chamadoId: string }) {
             : "Escreva a resposta que o colaborador vai receber por e-mail."
         }
       />
+
+      {prazoPrimeiraResposta && !interna && (
+        <p className="mt-2 rounded-lg bg-tea-ambar-50 px-3 py-2 text-sm text-tea-ambar-800">
+          Enviar esta resposta cumpre a 1ª resposta, que vence {prazoPrimeiraResposta}. Diga o próximo
+          passo e quando a pessoa terá retorno.
+        </p>
+      )}
 
       <div className="mt-4">
         <label className="rotulo" htmlFor={`anexos-rh-${rodada}`}>

@@ -129,7 +129,11 @@ npm run dev                  # http://localhost:3000
 | `/rh/login` | RH | Entrada no painel |
 | `/rh` | RH | Fila com filtros e busca |
 | `/rh/indicadores` | RH | Painel de indicadores do atendimento |
-| `/rh/chamados/[id]` | RH | Atendimento do chamado |
+| `/rh/chamados/[id]` | RH | Atendimento do chamado, com prazos de SLA |
+| `/rh/sla` | RH | Calculadora de SLA, prazos por assunto e regras |
+| `/rh/conta` | RH | Troca de senha, resumo diário e destinatários dos avisos |
+| `/rh/recuperar` | RH | "Esqueci minha senha" |
+| `/api/resumo-diario` | Rotina | Resumo da manhã por e-mail (dias úteis, 7h30) |
 | `/diagnostico` | Implantação | Confere chaves, banco e armazenamento |
 
 ---
@@ -205,6 +209,10 @@ O sistema lida com CPF e atestados médicos, que são dados sensíveis. O que j�
 - **Notas internas** do RH nunca são devolvidas para o colaborador — a consulta pública
   filtra `interna = false` no próprio servidor.
 - **Histórico de alterações** por chamado: quem mudou status, prioridade e responsável.
+- **Papel e acesso protegidos**: cada pessoa do RH só consegue alterar o próprio nome e a
+  preferência de resumo. Ninguém se promove a administrador nem reativa o próprio acesso.
+- **Senhas**: ficam só no Supabase Auth, guardadas como hash. O portal nunca grava, registra
+  em log ou envia senha por e-mail; guarda apenas que a senha mudou, por quem e quando.
 - As páginas do sistema pedem para não serem indexadas por buscadores.
 
 O que depende de você:
@@ -349,3 +357,96 @@ npm run build      # build de produção
 npm start          # sobe o build
 npm run typecheck  # checagem de tipos
 ```
+
+## 11. SLA, avisos por e-mail e conta do RH
+
+### Como o SLA funciona
+
+Todo chamado novo chega com uma **prévia de SLA**: prioridade (Crítica, Alta, Normal ou
+Planejada), prazo da 1ª resposta e prazo de resolução. A prévia usa:
+
+1. o **assunto** escolhido no portal, que define a prioridade base e o prazo de resolução;
+2. os **campos do formulário** (motivo do afastamento, datas de início, retorno e vigência);
+3. **palavras-chave do relato** (por exemplo "assédio", "não caiu", "todos da unidade"), que
+   sugerem os agravantes; e
+4. o **histórico**: o mesmo CPF com o mesmo assunto nos últimos 30 dias conta como reincidência.
+
+A triagem confirma (**Confirmar SLA**) ou ajusta (**Salvar revisão**) no quadro ao lado do
+chamado. Os prazos contam desde a abertura, não desde a confirmação. Enquanto o chamado está
+"Aguardando colaborador" (ou resolvido), o relógio da resolução para, e o prazo é estendido
+quando o chamado volta a andar.
+
+A prévia fica guardada. Na primeira confirmação, o portal registra se ela acertou o nível e os
+agravantes. A aba **Indicadores** mostra a taxa de acerto por assunto e indica quando um
+assunto pode dispensar a confirmação humana: pelo menos 30 confirmados, 95% de acerto e
+nenhuma prévia abaixo do nível oficial. Chamados Críticos sempre passam por uma pessoa.
+
+| Onde mudar | Arquivo |
+|---|---|
+| Prioridade, prazos e "o que conta como resolvido" de cada assunto | `src/lib/sla/regras.ts` |
+| Palavras-chave dos agravantes | `src/lib/sla/palavras.ts` |
+| Expediente (8h às 18h) e feriados | `src/lib/sla/calendario.ts` |
+
+Um assunto novo no catálogo sem regra própria entra como Normal com 5 dias úteis até ganhar a
+sua regra. A calculadora em `/rh/sla` usa as mesmas regras da fila; o arquivo
+`ferramentas/calculadora-sla.html` é a versão avulsa usada antes da integração e não acompanha
+mudanças feitas aqui.
+
+### Avisos por e-mail
+
+| Aviso | Quem recebe | Quando |
+|---|---|---|
+| Resumo pessoal | Cada pessoa do RH com chamado atribuído | Dias úteis, 7h30 |
+| Resumo da gestão | Destinatários "gestão" | Dias úteis, 7h30 (às segundas, com a semana) |
+| Pendências de triagem | Destinatários "triagem" | Dias úteis, 7h30, se houver pendência |
+| Chamado Crítico | Gestão e triagem | Na hora em que o chamado chega ou é reclassificado |
+| Senha alterada | A própria pessoa | Na hora da troca |
+
+Os e-mails levam só números e links para a fila já filtrada, nunca nomes de colaboradores ou
+o texto dos chamados. Quem não tem nada pendente não recebe e-mail. Cada pessoa do RH pode
+desligar o próprio resumo em **Minha conta**. Os destinatários de gestão e triagem não precisam
+ter login: um administrador os cadastra em **Minha conta › Quem recebe os avisos**.
+
+A rotina é a `/api/resumo-diario`, agendada em `vercel.json` (`30 10 * * 1-5`, ou seja, 7h30
+de Brasília em dias de semana; no plano gratuito da Vercel o horário pode variar dentro da
+hora). Feriados são pulados. Um registro por destinatário e dia evita e-mail duplicado.
+
+Para conferir sem enviar nada:
+
+```bash
+curl -H "Authorization: Bearer SEU_CRON_SECRET" "https://seu-endereco/api/resumo-diario?simular=1"
+```
+
+### Troca e recuperação de senha
+
+- **Minha conta › Alterar senha**: pede a senha atual, exige 10 caracteres com letras e
+  números, desconecta os outros aparelhos e envia um aviso por e-mail. Limite de 5 tentativas
+  a cada 15 minutos.
+- **Esqueci minha senha** (tela de login): envia um link para o e-mail de cadastro. A resposta
+  na tela é sempre a mesma, para não revelar quais e-mails existem.
+
+### Passo a passo para colocar no ar
+
+1. **Antes do deploy**, rode de novo o `supabase/schema.sql` inteiro no SQL Editor. Ele só
+   acrescenta colunas e tabelas e pode ser executado mais de uma vez. (Se o deploy acontecer
+   antes, o portal continua funcionando: abrir e responder chamados não depende do SLA, e a
+   fila mostra um aviso até a migração rodar.)
+2. Defina quem é administrador:
+   ```sql
+   update public.rh_usuarios set papel = 'admin' where email = 'pessoa@empresa.com.br';
+   ```
+3. Entre no portal como administrador e cadastre os destinatários de gestão e triagem em
+   **Minha conta**.
+4. Confira se `CRON_SECRET` e `RESEND_API_KEY` estão nas variáveis da Vercel e se o
+   remetente (`EMAIL_REMETENTE`) é de um domínio validado no Resend.
+5. Para o "Esqueci minha senha", no painel do Supabase:
+   - **Authentication › URL Configuration**: em *Site URL*, o endereço do portal; em
+     *Redirect URLs*, acrescente `https://seu-endereco/rh/auth/confirmar`.
+   - **Project Settings › Authentication › SMTP Settings**: configure o envio pelo Resend
+     (host `smtp.resend.com`, porta 465, usuário `resend`, senha = a API key). O envio padrão do
+     Supabase manda pouquíssimos e-mails por hora e não serve para uso real.
+   - Opcional: em **Authentication › Email Templates › Reset Password**, troque o link para
+     `{{ .SiteURL }}/rh/auth/confirmar?token_hash={{ .TokenHash }}&type=recovery`. Assim o link
+     funciona mesmo se a pessoa abrir o e-mail em outro aparelho.
+6. Chamados abertos antes da atualização aparecem "Sem prazos calculados". Na tela do chamado,
+   o botão **Calcular prazos** calcula a partir da data de abertura.
